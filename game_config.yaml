@@ -1,0 +1,645 @@
+---
+# Game Story Configuration
+
+game_settings:
+  title: "The Warehouse Mystery"
+  starting_location: "warehouse_entrance"
+  default_time: "Morning"
+
+items:
+  test:
+    id: "test"
+    name: "test"
+    description: "A test item"
+    effects: 
+
+inner_voices:
+
+thoughts:
+
+locations:
+  warehouse_entrance:
+    id: "warehouse_entrance"
+    name: "Warehouse Entrance"
+    description: "A imposing metal door stands before you, its surface marked by years of use. The surrounding concrete walls are covered in faded graffiti. The air smells of rust and distant sea salt."
+    available_actions:
+      - name: "inspect_door"
+        description: "Examine the warehouse door closely"
+        requirements:
+          perception: 8
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "scratch_marks"
+              description: "Recent scratch marks around the lock suggest forced entry"
+              related_quest: "main_investigation"
+              discovered: false
+    connected_locations:
+      - "warehouse_office"
+      - "parking_lot"
+      - "town_square" # Added connection to town for quest accessibility
+
+  warehouse_office:
+    id: "warehouse_office"
+    name: "Security Office"
+    description: "A small, cluttered office with monitors showing security feeds. Coffee cups and old newspapers litter the desk. The night shift log book lies open."
+    available_actions:
+      - name: "check_logbook"
+        description: "Review the security log book"
+        requirements:
+          logic: 7
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "night_shift_anomaly"
+              description: "The night guard's last entry stops mid-sentence"
+              related_quest: "main_investigation"
+              discovered: false
+    connected_locations:
+      - "warehouse_entrance"
+
+  # Added locations for the missing locket quest
+  town_square:
+    id: "town_square"
+    name: "Town Square"
+    description: "The heart of the town with a beautiful central fountain. People gather here to socialize and relax. The square is lined with benches and decorative plantings. Recently, a festival was held here."
+    available_actions:
+      - name: "search_fountain"
+        description: "Search around the fountain area"
+        requirements:
+          perception: 7
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "locket_clue"
+              description: "You found a thread that might have come from the locket's chain."
+              related_quest: "missing_locket"
+              discovered: true
+    connected_locations:
+      - "warehouse_entrance"
+      - "market"
+      - "garden"
+
+  market:
+    id: "market"
+    name: "Market"
+    description: "A bustling marketplace with various stalls selling fresh produce, crafts, and trinkets. The air is filled with the mingling aromas of spices, flowers, and street food."
+    available_actions:
+      - name: "browse_stalls"
+        description: "Look through the market stalls"
+        requirements: {}
+        consequences: []
+    connected_locations:
+      - "town_square"
+      - "garden"
+
+  garden:
+    id: "garden"
+    name: "Garden"
+    description: "A serene public garden with winding paths, vibrant flower beds, and shady trees. A popular spot for relaxation and contemplation. Children sometimes play hide and seek among the shrubs."
+    available_actions:
+      - name: "search_garden"
+        description: "Search the garden thoroughly"
+        requirements:
+          perception: 6
+        consequences:
+          - event_type: "AddItem"
+            data:
+              id: "silver_locket"
+              name: "Silver Locket"
+              description: "A beautiful silver locket with intricate engravings. It contains a small portrait inside."
+              effects: {}
+    connected_locations:
+      - "town_square"
+      - "market"
+
+  # Required for the quest but not explicitly described
+  parking_lot:
+    id: "parking_lot"
+    name: "Parking Lot"
+    description: "A modest parking area serving the warehouse district. Oil stains mark the cracked asphalt, and a few vehicles are parked haphazardly."
+    available_actions: []
+    connected_locations:
+      - "warehouse_entrance"
+
+npcs:
+  security_guard:
+    id: "guard_martinez"
+    name: "Officer Martinez"
+    dialogue_entry_point: "martinez_intro"
+    disposition: 50
+    location: "warehouse_office"
+    gender: "male"
+
+  warehouse_worker:
+    id: "worker_chen"
+    name: "Sarah Chen"
+    dialogue_entry_point: "chen_intro"
+    disposition: 65
+    location: "warehouse_entrance"
+    gender: "female"
+
+  # Added NPCs for the missing locket quest
+  eliza:
+    id: "eliza"
+    name: "Eliza"
+    dialogue_entry_point: "eliza_default"
+    disposition: 60
+    location: "town_square"
+    gender: "female"
+
+  shopkeeper:
+    id: "shopkeeper"
+    name: "Mr. Harrison"
+    dialogue_entry_point: "shopkeeper_default"
+    disposition: 50
+    location: "market"
+    gender: "male"
+
+  gardener:
+    id: "gardener"
+    name: "Old Tom"
+    dialogue_entry_point: "gardener_default"
+    disposition: 55
+    location: "garden"
+    gender: "male"
+
+  merchant:
+    id: "merchant"
+    name: "Maya"
+    dialogue_entry_point: "merchant_default"
+    disposition: 45
+    location: "market"
+    gender: "female"
+
+dialogue_trees:
+  martinez_intro:
+    id: "martinez_intro"
+    text: "What are you doing here? This is a restricted area."
+    speaker: "Officer Martinez"
+    emotional_state: "Suspicious"
+    inner_voice_comments:
+      - voice_type: "Empathy"
+        text: "His posture is defensive, but there's worry in his eyes. Something's eating at him."
+        skill_requirement: 8
+      - voice_type: "Authority"
+        text: "He's testing your authority. Stand your ground."
+        skill_requirement: 7
+    options:
+      - id: "show_badge"
+        text: "Show your badge: 'Detective from the 41st precinct. We received reports of suspicious activity.'"
+        skill_check:
+          base_difficulty: 12
+          primary_skill: "authority"
+          supporting_skills:
+            - ["composure", 0.5]
+          emotional_modifiers:
+            Suspicious: -2
+          white_check: false
+          hidden: false
+        emotional_impact:
+          Friendly: 2
+          Suspicious: -3
+        conditions:
+          required_items: ["police_badge"]
+          required_skills:
+            authority: 8
+        next_node: "martinez_cooperative"
+
+      - id: "casual_approach"
+        text: "Play it casual: 'Just looking around. Noticed some unusual activity in the area.'"
+        skill_check:
+          base_difficulty: 10
+          primary_skill: "suggestion"
+          supporting_skills:
+            - ["empathy", 0.3]
+          emotional_modifiers:
+            Suspicious: -1
+          white_check: true
+          hidden: false
+        next_node: ""
+        success_node: "martinez_cooperative"
+        failure_node: "martinez_suspicious"
+
+      - id: "test"
+        text: "A test dialogue option."
+        skill_check:
+          base_difficulty: 10
+          primary_skill: "suggestion"
+          supporting_skills:
+            - ["empathy", 0.3]
+          emotional_modifiers:
+            Suspicious: -1
+          white_check: true
+          hidden: false
+        next_node: "martinez_cooperative"
+
+  martinez_cooperative:
+    id: "martinez_cooperative"
+    text: "Oh, thank god. Look, detective, something weird's been going on here. The night shift logs don't add up, and I found this yesterday..."
+    speaker: "Officer Martinez"
+    emotional_state: "Friendly"
+    inner_voice_comments:
+      - voice_type: "Logic"
+        text: "He's been gathering evidence. This could be valuable for the investigation."
+        skill_requirement: 6
+    options:
+      - id: "examine_evidence"
+        text: "Examine what he's found"
+        next_node: "martinez_evidence"
+
+  martinez_suspicious:
+    id: "martinez_suspicious"
+    text: "Nice try, criminal!"
+    speaker: "Officer Martinez"
+    emotional_state: "Angry"
+    inner_voice_comments: []
+    options: []
+
+  martinez_evidence:
+    id: "martinez_evidence"
+    text: "Here, take a look at this manifest. The numbers don't match our inventory."
+    speaker: "Officer Martinez"
+    emotional_state: "Nervous"
+    inner_voice_comments: []
+    options:
+      - id: "thank_martinez"
+        text: "Thank you, this is valuable evidence."
+        next_node: ""
+
+  chen_intro:
+    id: "chen_intro"
+    text: "Can I help you? I'm just finishing my shift..."
+    speaker: "Sarah Chen"
+    emotional_state: "Nervous"
+    inner_voice_comments:
+      - voice_type: "Intuition"
+        text: "She keeps glancing at the loading bay. Something there she doesn't want you to see?"
+        skill_requirement: 7
+    options:
+      - id: "casual_question"
+        text: "Ask about her shift: 'Long night?'"
+        skill_check:
+          base_difficulty: 8
+          primary_skill: "empathy"
+          white_check: true
+          hidden: false
+        next_node: "chen_smalltalk"
+
+  chen_smalltalk:
+    id: "chen_smalltalk"
+    text: "Yeah, you could say that. Just ready to go home and sleep."
+    speaker: "Sarah Chen"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "ask_about_warehouse"
+        text: "Ask if she's noticed anything unusual at the warehouse lately."
+        next_node: ""
+
+  # Added dialogue trees from the quest-dialogue.txt
+  eliza_default:
+    id: "eliza_default"
+    text: "Hello there. It's nice to meet you, though I'm afraid I'm a bit distracted at the moment."
+    speaker: "Eliza"
+    emotional_state: "Nervous"
+    inner_voice_comments:
+      - voice_type: "Empathy"
+        text: "She seems upset about something. Maybe I should ask what's wrong."
+        trigger_condition: null
+        skill_requirement: 5
+    options:
+      - id: "ask_problem"
+        text: "You seem troubled. Is everything alright?"
+        skill_check: null
+        emotional_impact:
+          Friendly: 1
+        conditions:
+          required_quests: {}
+        consequences: []
+        next_node: "eliza_explains_problem"
+        inner_voice_reactions: []
+
+      - id: "ignore_problem"
+        text: "Nice to meet you too. I'll let you get back to whatever you were doing."
+        skill_check: null
+        emotional_impact:
+          Neutral: 0
+        conditions:
+          required_quests: {}
+        consequences: []
+        next_node: ""
+        inner_voice_reactions:
+          - voice_type: "Empathy"
+            text: "You're walking away from someone who clearly needs help..."
+            trigger_condition: null
+            skill_requirement: 3
+
+  eliza_explains_problem:
+    id: "eliza_explains_problem"
+    text: "I've lost my grandmother's locket. It's the only thing I have to remember her by. I've looked everywhere, but I can't find it."
+    speaker: "Eliza"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "offer_help"
+        text: "I'd be happy to help you look for it. Where did you last see it?"
+        skill_check: null
+        emotional_impact:
+          Friendly: 2
+        conditions:
+          required_quests: {}
+        consequences:
+          # - !StartQuest "missing_locket"
+        next_node: "eliza_gives_info"
+        inner_voice_reactions:
+          - voice_type: "Logic"
+            text: "This is a good opportunity to learn more about the town."
+            trigger_condition: null
+            skill_requirement: null
+
+      - id: "decline_help"
+        text: "That's unfortunate. Hope you find it soon."
+        skill_check: null
+        emotional_impact:
+        conditions:
+          required_quests: {}
+        consequences:
+        next_node: ""
+        inner_voice_reactions: []
+
+  eliza_gives_info:
+    id: "eliza_gives_info"
+    text: "Thank you so much! I was last wearing it in the town square during the festival yesterday. I remember touching it near the fountain, but after that... it was just gone when I got home."
+    speaker: "Eliza"
+    emotional_state: "Friendly"
+    inner_voice_comments: []
+    options:
+      - id: "investigate_square"
+        text: "I'll start by checking the town square then. What does the locket look like?"
+        skill_check: null
+        emotional_impact:
+          Friendly: 1
+        conditions:
+          required_quests: {}
+        consequences: []
+        next_node: "eliza_describes_locket"
+        inner_voice_reactions: []
+
+  eliza_describes_locket:
+    id: "eliza_describes_locket"
+    text: "It's silver with intricate vine patterns on the outside. Inside is a small portrait of my grandmother. It's about this big and hangs on a thin silver chain. Please find it, it means the world to me."
+    speaker: "Eliza"
+    emotional_state: "Friendly"
+    inner_voice_comments: []
+    options:
+      - id: "promise_help"
+        text: "I'll do my best to find it for you."
+        skill_check: null
+        emotional_impact:
+          Friendly: 1
+        conditions:
+          required_quests: {}
+        consequences:
+          # - !AdvanceQuest ["missing_locket", "investigation"]
+        next_node: ""
+        inner_voice_reactions: []
+
+  eliza_return_locket:
+    id: "eliza_return_locket"
+    text: "Oh! Did you find anything?"
+    speaker: "Eliza"
+    emotional_state: "Friendly"
+    inner_voice_comments: []
+    options:
+      - id: "give_locket"
+        text: "I found your locket. Here it is."
+        skill_check: null
+        emotional_impact:
+          Friendly: 5
+        conditions:
+          required_items: ["silver_locket"]
+          required_quests:
+            "missing_locket": "InProgress"
+        consequences:
+          # - !AdvanceQuest ["missing_locket", "quest_complete"]
+        next_node: "eliza_grateful"
+        inner_voice_reactions: []
+
+      - id: "still_looking"
+        text: "Not yet, but I'm still looking."
+        skill_check: null
+        emotional_impact:
+        conditions:
+          required_quests:
+            "missing_locket": "InProgress"
+        consequences: []
+        next_node: "eliza_still_hopeful"
+        inner_voice_reactions: []
+
+  eliza_grateful:
+    id: "eliza_grateful"
+    text: "Oh my goodness! You found it! Thank you, thank you so much! This means everything to me. Please, take this charm as a token of my gratitude. It's not much, but it's said to bring good fortune to those who help others."
+    speaker: "Eliza"
+    emotional_state: "Friendly"
+    inner_voice_comments:
+      - voice_type: "Empathy"
+        text: "Her joy is palpable. It feels good to have helped her."
+        trigger_condition: null
+        skill_requirement: 5
+    options:
+      - id: "accept_gratefully"
+        text: "You're welcome. I'm glad I could help you."
+        skill_check: null
+        emotional_impact:
+          Friendly: 2
+        conditions:
+          required_quests: {}
+        consequences:
+          # - event_type: "AddItem"
+          #   data:
+          #     id: "eliza_charm"
+          #     name: "Eliza's Charm"
+          #     description: "A small token of appreciation from Eliza. It brings good luck to those who help others."
+          #     effects:
+          #       "charisma": 2
+        next_node: ""
+        inner_voice_reactions: []
+
+  eliza_still_hopeful:
+    id: "eliza_still_hopeful"
+    text: "Oh... I see. Well, please keep looking. That locket means everything to me."
+    speaker: "Eliza"
+    emotional_state: "Desperate"
+    inner_voice_comments: []
+    options:
+      - id: "reassure"
+        text: "Don't worry, I won't give up until I find it."
+        skill_check: null
+        emotional_impact:
+          Friendly: 1
+        conditions:
+          required_quests: {}
+        consequences:
+        next_node: ""
+        inner_voice_reactions: []
+
+  shopkeeper_default:
+    id: "shopkeeper_default"
+    text: "Welcome to my shop. Looking for something specific today?"
+    speaker: "Mr. Harrison"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "ask_about_locket"
+        text: "I'm looking for a silver locket. Have you seen anyone with one recently?"
+        skill_check: null
+        emotional_impact:
+          Neutral: 0
+        conditions:
+          required_quests:
+            "missing_locket": "InProgress"
+        consequences:
+        next_node: "shopkeeper_info"
+        inner_voice_reactions: []
+
+      - id: "just_browsing"
+        text: "Just browsing, thanks."
+        skill_check: null
+        emotional_impact:
+          Neutral: 0
+        conditions:
+          required_quests: {}
+        consequences: []
+        next_node: ""
+        inner_voice_reactions: []
+
+  shopkeeper_info:
+    id: "shopkeeper_info"
+    text: "A silver locket, hmm? Now that you mention it, I did see young Tim playing with something shiny near the garden yesterday. Could've been a locket."
+    speaker: "Mr. Harrison"
+    emotional_state: "Neutral"
+    inner_voice_comments:
+      - voice_type: "Logic"
+        text: "This could be a good lead. I should check the garden."
+        trigger_condition: null
+        skill_requirement: null
+    options:
+      - id: "thank_info"
+        text: "Thank you, that's helpful. I'll check the garden."
+        skill_check: null
+        emotional_impact:
+        conditions:
+          required_quests: {}
+        consequences:
+          # - !AdvanceQuest ["missing_locket", "garden_search"]
+        next_node: ""
+        inner_voice_reactions: []
+
+      - id: "doubt_info"
+        text: "Are you sure? That doesn't sound very reliable."
+        skill_check: null
+        emotional_impact:
+        conditions:
+          required_quests: {}
+        consequences:
+        next_node: "shopkeeper_annoyed"
+        inner_voice_reactions: []
+
+  shopkeeper_annoyed:
+    id: "shopkeeper_annoyed"
+    text: "Well, it's all I know. Take it or leave it."
+    speaker: "Mr. Harrison"
+    emotional_state: "Angry"
+    inner_voice_comments: []
+    options:
+      - id: "apologize"
+        text: "Sorry, I appreciate the help. I'll check the garden."
+        skill_check: null
+        emotional_impact:
+          Neutral: 0
+        conditions:
+          required_quests: {}
+        consequences:
+        next_node: ""
+        inner_voice_reactions: []
+
+      - id: "leave_annoyed"
+        text: "Fine, I'll figure it out myself."
+        skill_check: null
+        emotional_impact:
+        conditions:
+          required_quests: {}
+        consequences:
+        next_node: ""
+        inner_voice_reactions: []
+
+  # Added placeholder dialogue trees for gardener and merchant
+  gardener_default:
+    id: "gardener_default"
+    text: "Lovely day to be enjoying the garden, isn't it? The roses are particularly fragrant this season."
+    speaker: "Old Tom"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "ask_about_locket"
+        text: "I'm looking for a silver locket. Have you seen any children playing with something shiny here recently?"
+        conditions:
+          required_quests:
+            "missing_locket": "InProgress"
+        next_node: "gardener_locket_info"
+      - id: "chat_gardens"
+        text: "The garden is beautiful. How long have you worked here?"
+        next_node: "gardener_chat"
+
+  gardener_locket_info:
+    id: "gardener_locket_info"
+    text: "A silver locket? Yes, I did see some children playing over by the east garden beds yesterday. They were digging around in the soil. I had to shoo them away before they damaged my petunias."
+    speaker: "Old Tom"
+    emotional_state: "Friendly"
+    inner_voice_comments: []
+    options:
+      - id: "thank_gardener"
+        text: "Thanks for the information. I'll check over there."
+        next_node: ""
+
+  gardener_chat:
+    id: "gardener_chat"
+    text: "Oh, going on twenty years now. Started when my knees were better, that's for sure!"
+    speaker: "Old Tom"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "end_chat"
+        text: "Well, it shows. The garden is magnificent."
+        next_node: ""
+
+  merchant_default:
+    id: "merchant_default"
+    text: "Fresh fruits and vegetables! Best prices in town! What can I get for you today?"
+    speaker: "Maya"
+    emotional_state: "Friendly"
+    inner_voice_comments: []
+    options:
+      - id: "ask_about_locket"
+        text: "I'm looking for a silver locket that was lost recently. Have you seen anything like that?"
+        conditions:
+          required_quests:
+            "missing_locket": "InProgress"
+        next_node: "merchant_locket_info"
+      - id: "browse_goods"
+        text: "Just browsing for now, thanks."
+        next_node: ""
+
+  merchant_locket_info:
+    id: "merchant_locket_info"
+    text: "A silver locket? Hmm, I haven't seen one for sale anywhere, if that's what you're asking. But I did see some children playing in the garden yesterday. They seemed to be passing something shiny between them."
+    speaker: "Maya"
+    emotional_state: "Neutral"
+    inner_voice_comments: []
+    options:
+      - id: "thank_merchant"
+        text: "That's helpful, thank you. I'll check the garden."
+        next_node: ""
+        consequences:
+
