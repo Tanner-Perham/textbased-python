@@ -1,0 +1,83 @@
+/* Dialogue UI Styles */
+
+Screen {
+    background: $surface-darken-2;
+    color: $text;
+}
+
+#dialogue-container {
+    layout: vertical;
+    width: 100%;
+    height: 100%;
+    margin: 0 1;
+}
+
+#dialogue-history {
+    width: 100%;
+    height: 3fr;
+    border: round $primary-lighten-2;
+    background: $surface-darken-1;
+    padding: 1;
+    overflow-y: scroll;
+}
+
+#history-content {
+    width: 100%;
+    height: auto;
+}
+
+#dialogue-options {
+    width: 100%;
+    height: 1fr;
+    border: round $secondary;
+    background: $surface;
+    padding: 1;
+    margin-top: 1;
+    overflow-y: auto;
+}
+
+/* Custom colors and styles for different dialogue elements */
+.emotional-state {
+    text-style: italic;
+    color: $text-muted;
+}
+
+/* Skill check result styles */
+.skill-check {
+    width: auto;
+    padding: 1;
+    margin: 1;
+}
+
+/* Success and failure styles */
+.success {
+    color: $success;
+    border: tall $success;
+}
+
+.failure {
+    color: $error;
+    border: tall $error;
+}
+
+/* Make the scrollbar more visible */
+ScrollableContainer:hover {
+    scrollbar-color: $primary $surface;
+}
+
+/* Footer styling */
+Footer {
+    background: $surface-darken-3;
+    color: $text-muted;
+}
+
+/* Animation for highlighting selected options */
+@keyframes pulse {
+    0% { background: $primary-background; }
+    50% { background: $primary-background-lighten-1; }
+    100% { background: $primary-background; }
+}
+
+DialogueOption.selected {
+    animation: pulse 2s infinite;
+}
