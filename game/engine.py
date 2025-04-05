@@ -71,10 +71,20 @@ class GameEngine:
             npc = parts[1]
             return f"Use the dialogue system for talking to NPCs"
 
-        elif parts[0] in ["go", "walk", "move", "head"] and len(parts) > 1:
-            direction = parts[1]
+        elif parts[0] in ["go", "walk", "move", "head"]:
+            # Extract direction from the remaining parts of the command
+            direction_parts = parts[1:]  # Get all words after the movement verb
+            
+            # Remove common connecting words
+            connecting_words = ["to", "the", "towards", "into", "inside"]
+            direction = " ".join(word for word in direction_parts if word.lower() not in connecting_words)
+            
+            if not direction:  # If no direction remains after filtering
+                return "Where would you like to go?"
+                
             return self._handle_movement(direction)
-
+        elif parts[0] == "back":
+            return self._handle_movement("back")
         elif parts[0] in ["exits", "directions", "connections"] or (
             len(parts) >= 3
             and parts[0] == "where"
@@ -190,6 +200,8 @@ class GameEngine:
 
     def _handle_movement(self, direction: str) -> str:
         """Handle movement commands."""
+        if not direction:
+            return "You need to specify a direction to move."
         current_location = self.config.locations.get(self.current_location)
         if not current_location:
             return "ERROR: Current location not found."
@@ -203,41 +215,54 @@ class GameEngine:
 
         # Try to match direction with a connected location
         else:
-            for loc_id in current_location.connected_locations:
-                connected_loc = self.config.locations.get(loc_id)
-                if not connected_loc:
-                    continue
+            target_location_id = self._find_closest_location_match(
+                direction, current_location.connected_locations
+            )
+            print(f"Target location ID: {target_location_id}")
 
-                # Match by partial name or ID
-                if (
-                    direction.lower() in connected_loc.name.lower()
-                    or direction.lower() in loc_id.lower()
-                ):
-                    target_location_id = loc_id
-                    break
-
-                # Match by cardinal direction
-                if direction in ["north", "south", "east", "west"]:
-                    if (
-                        direction in connected_loc.name.lower()
-                        or direction in loc_id.lower()
-                    ):
-                        target_location_id = loc_id
-                        break
-
-        if not target_location_id:
-            return f"You can't go to the {direction} from here."
+            if not target_location_id:
+                valid_exits = [
+                    self.config.locations[loc_id].name
+                    for loc_id in current_location.connected_locations
+                    if loc_id in self.config.locations
+                ]
+                if valid_exits:
+                    return f"You can't go to the {direction} from here. Valid exits are: {', '.join(valid_exits)}."
+                else:
+                    return f"You can't go to the {direction} from here. There are no valid exits."
 
         # Move to new location
-        self.previous_location = self.current_location
-        self.current_location = target_location_id
-
-        # Update game state
-        self.game_state.change_location(target_location_id)
-
         # Get description
         new_location = self.config.locations.get(target_location_id)
+        if new_location is None:
+            return "You move, but the destination seems to be missing. Please check the game configuration."
+        self.previous_location = self.current_location
+        self.current_location = target_location_id
         return self._get_movement_response(new_location.name, new_location.description)
+
+    def _find_closest_location_match(self, partial: str, connected_locations: List[str]) -> Optional[str]:
+        """Find the closest matching location ID or name."""
+        matches = []
+        for loc_id in connected_locations:
+            connected_loc = self.config.locations.get(loc_id)
+            if not connected_loc:
+                continue
+
+            # Match by partial name or ID
+            if (
+                partial.lower() in connected_loc.name.lower()
+                or partial.lower() in loc_id.lower()
+            ):
+                matches.append(loc_id)
+
+        if len(matches) > 1:
+            matching_names = [self.config.locations[loc_id].name for loc_id in matches]
+            raise ValueError(
+                f"Ambiguous direction: multiple locations match '{partial}'. Matches: {', '.join(matching_names)}. Please be more specific."
+            )
+        elif len(matches) == 1:
+            return matches[0]
+        return None
 
     def _handle_show_exits(self) -> str:
         """Handle the 'exits' command."""
