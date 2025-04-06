@@ -49,45 +49,34 @@ class DialogueManager:
         """Start a dialogue with an NPC."""
         responses = []
 
+        # Filter dialogue tree for nodes belonging to this NPC
+        npc_dialogue_tree = {
+            key: value for key, value in self.dialogue_tree.items() 
+            if key.startswith(f"{npc_id}_")
+        }
+
+        if not npc_dialogue_tree:
+            responses.append(
+                DialogueResponse.Speech(
+                    speaker="System",
+                    text=f"No dialogue found for NPC: {npc_id}",
+                    emotion="Neutral",
+                )
+            )
+            return responses
+
         # Determine entry point based on NPC ID
         entry_node = self._determine_entry_point(npc_id, game_state)
 
         # Check if entry node exists
-        if entry_node not in self.dialogue_tree:
-            # Try fallback entry
-            fallback_entry = f"{npc_id}_default"
-
-            if fallback_entry not in self.dialogue_tree:
-                # If no dialogue found, return error message
-                if not self.dialogue_tree:
-                    responses.append(
-                        DialogueResponse.Speech(
-                            speaker="System",
-                            text="ERROR: No dialogue data available.",
-                            emotion="Neutral",
-                        )
-                    )
-                    return responses
-
-                # Use first available node
-                self.current_node = next(iter(self.dialogue_tree))
-            else:
-                self.current_node = fallback_entry
-        else:
+        if entry_node in npc_dialogue_tree:
             self.current_node = entry_node
+        else:
+            # Use first available node for this NPC
+            self.current_node = next(iter(npc_dialogue_tree))
 
         # Process current node
         responses.extend(self.process_node(self.current_node, game_state))
-
-        # Add default response if none were generated
-        if not responses:
-            responses.append(
-                DialogueResponse.Speech(
-                    speaker="System",
-                    text=f"No dialogue found for node: {self.current_node}",
-                    emotion="Neutral",
-                )
-            )
 
         return responses
 
