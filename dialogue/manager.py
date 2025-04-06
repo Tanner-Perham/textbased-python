@@ -52,7 +52,7 @@ class DialogueManager:
         # Filter dialogue tree for nodes belonging to this NPC
         npc_dialogue_tree = {
             key: value for key, value in self.dialogue_tree.items() 
-            if key.startswith(f"{npc_id}_")
+            if value.speaker == npc_id
         }
 
         if not npc_dialogue_tree:

@@ -45,8 +45,7 @@ async def main():
     # Initialize dialogue system
     dialogue_manager = DialogueManager()
     dialogue_manager.set_dialogue_tree(convert_dialogue_trees(config))
-    dialogue_handler = DialogueHandler(dialogue_manager)
-    game_engine.dialogue_handler = dialogue_handler
+    game_engine.dialogue_handler = dialogue_manager  # Use dialogue_manager directly
 
     print(f"Current Location: {game_engine.current_location}")
     print("Enter a command (or type 'help' for a list of commands):")
@@ -90,94 +89,11 @@ async def main():
             # In a real implementation with a UI, you'd display notifications here
             notification_check_time = current_time
 
-        # Special handling for dialogue commands
-        command_parts = user_input.lower().split(maxsplit=1)
-        if (
-            command_parts
-            and command_parts[0] in ["talk", "speak"]
-            and len(command_parts) > 1
-        ):
-            npc_name = command_parts[1]
-            # Find NPC in current location
-            npc_id = find_npc_by_name(config, game_engine.current_location, npc_name)
-            if npc_id:
-                # Handle dialogue with async
-                try:
-                    print(f"\nStarting conversation with {config.npcs[npc_id].name}...")
-                    result = await dialogue_handler.handle_dialogue(
-                        npc_id, game_engine.game_state
-                    )
-                    print(result)
-                except Exception as e:
-                    print(f"Error in dialogue: {e}")
-            else:
-                print(f"There is no {npc_name} here to talk to.")
-        else:
-            # Normal command processing
-            response = game_engine.process_input(user_input)
-            print(response)
+        # Normal command processing
+        response = game_engine.process_input(user_input)
+        print(response)
 
         print()  # Empty line for readability
-
-
-def find_npc_by_name(
-    config: GameConfig, current_location: str, npc_name: str
-) -> Optional[str]:
-    """Find an NPC ID by name in the current location."""
-    for npc_id, npc in config.npcs.items():
-        # Check if NPC is in current location
-        if npc.location != current_location:
-            continue
-
-        # Check for name match (case-insensitive partial match)
-        if npc_name.lower() in npc.name.lower():
-            return npc_id
-
-        # Check for pronoun match
-        if matches_pronoun(config, npc, npc_name, current_location):
-            return npc_id
-
-    return None
-
-
-def matches_pronoun(
-    config: GameConfig, npc, pronoun: str, current_location: str
-) -> bool:
-    """Check if NPC matches a pronoun."""
-    pronoun = pronoun.lower()
-
-    # Count NPCs of each gender in current location
-    males_in_location = sum(
-        1
-        for n in config.npcs.values()
-        if n.location == current_location and n.gender == "male"
-    )
-
-    females_in_location = sum(
-        1
-        for n in config.npcs.values()
-        if n.location == current_location and n.gender == "female"
-    )
-
-    if (
-        pronoun in ["him", "he", "his"]
-        and npc.gender == "male"
-        and males_in_location == 1
-    ):
-        return True
-
-    if (
-        pronoun in ["her", "she", "hers"]
-        and npc.gender == "female"
-        and females_in_location == 1
-    ):
-        return True
-
-    if pronoun in ["them", "they", "their"]:
-        return True  # Always matches but might be ambiguous
-
-    return False
-
 
 def convert_dialogue_trees(config):
     """Convert config dialogue trees to internal format."""

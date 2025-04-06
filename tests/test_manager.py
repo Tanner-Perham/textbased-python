@@ -17,7 +17,7 @@ def setup_manager():
         "npc1_default": DialogueNode(
             id="npc1_default",
             text="Hello, traveler!",
-            speaker="NPC1",
+            speaker="npc1",
             emotional_state="Neutral",
             options=[
                 DialogueOption(
@@ -31,7 +31,7 @@ def setup_manager():
         "npc1_greet": DialogueNode(
             id="npc1_greet",
             text="Good to see you!",
-            speaker="NPC1",
+            speaker="npc1",
             emotional_state="Happy",
             options=[],
         ),

@@ -176,7 +176,7 @@ dialogue_trees:
   martinez_intro:
     id: "martinez_intro"
     text: "What are you doing here? This is a restricted area."
-    speaker: "Officer Martinez"
+    speaker: "guard_martinez"
     emotional_state: "Suspicious"
     inner_voice_comments:
       - voice_type: "Empathy"
@@ -237,7 +237,7 @@ dialogue_trees:
   martinez_cooperative:
     id: "martinez_cooperative"
     text: "Oh, thank god. Look, detective, something weird's been going on here. The night shift logs don't add up, and I found this yesterday..."
-    speaker: "Officer Martinez"
+    speaker: "guard_martinez"
     emotional_state: "Friendly"
     inner_voice_comments:
       - voice_type: "Logic"
@@ -259,7 +259,7 @@ dialogue_trees:
   martinez_evidence:
     id: "martinez_evidence"
     text: "Here, take a look at this manifest. The numbers don't match our inventory."
-    speaker: "Officer Martinez"
+    speaker: "guard_martinez"
     emotional_state: "Nervous"
     inner_voice_comments: []
     options:
@@ -267,10 +267,10 @@ dialogue_trees:
         text: "Thank you, this is valuable evidence."
         next_node: ""
 
-  chen_intro:
-    id: "chen_intro"
+  chen_default:
+    id: "chen_default"
     text: "Can I help you? I'm just finishing my shift..."
-    speaker: "Sarah Chen"
+    speaker: "worker_chen"
     emotional_state: "Nervous"
     inner_voice_comments:
       - voice_type: "Intuition"
@@ -289,7 +289,7 @@ dialogue_trees:
   chen_smalltalk:
     id: "chen_smalltalk"
     text: "Yeah, you could say that. Just ready to go home and sleep."
-    speaker: "Sarah Chen"
+    speaker: "worker_chen"
     emotional_state: "Neutral"
     inner_voice_comments: []
     options:
@@ -301,7 +301,7 @@ dialogue_trees:
   eliza_default:
     id: "eliza_default"
     text: "Hello there. It's nice to meet you, though I'm afraid I'm a bit distracted at the moment."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Nervous"
     inner_voice_comments:
       - voice_type: "Empathy"
@@ -338,7 +338,7 @@ dialogue_trees:
   eliza_explains_problem:
     id: "eliza_explains_problem"
     text: "I've lost my grandmother's locket. It's the only thing I have to remember her by. I've looked everywhere, but I can't find it."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Neutral"
     inner_voice_comments: []
     options:
@@ -371,7 +371,7 @@ dialogue_trees:
   eliza_gives_info:
     id: "eliza_gives_info"
     text: "Thank you so much! I was last wearing it in the town square during the festival yesterday. I remember touching it near the fountain, but after that... it was just gone when I got home."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Friendly"
     inner_voice_comments: []
     options:
@@ -389,7 +389,7 @@ dialogue_trees:
   eliza_describes_locket:
     id: "eliza_describes_locket"
     text: "It's silver with intricate vine patterns on the outside. Inside is a small portrait of my grandmother. It's about this big and hangs on a thin silver chain. Please find it, it means the world to me."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Friendly"
     inner_voice_comments: []
     options:
@@ -408,7 +408,7 @@ dialogue_trees:
   eliza_return_locket:
     id: "eliza_return_locket"
     text: "Oh! Did you find anything?"
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Friendly"
     inner_voice_comments: []
     options:
@@ -440,7 +440,7 @@ dialogue_trees:
   eliza_grateful:
     id: "eliza_grateful"
     text: "Oh my goodness! You found it! Thank you, thank you so much! This means everything to me. Please, take this charm as a token of my gratitude. It's not much, but it's said to bring good fortune to those who help others."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Friendly"
     inner_voice_comments:
       - voice_type: "Empathy"
@@ -469,7 +469,7 @@ dialogue_trees:
   eliza_still_hopeful:
     id: "eliza_still_hopeful"
     text: "Oh... I see. Well, please keep looking. That locket means everything to me."
-    speaker: "Eliza"
+    speaker: "eliza"
     emotional_state: "Desperate"
     inner_voice_comments: []
     options:
@@ -487,7 +487,7 @@ dialogue_trees:
   shopkeeper_default:
     id: "shopkeeper_default"
     text: "Welcome to my shop. Looking for something specific today?"
-    speaker: "Mr. Harrison"
+    speaker: "shopkeeper"
     emotional_state: "Neutral"
     inner_voice_comments: []
     options:
@@ -517,7 +517,7 @@ dialogue_trees:
   shopkeeper_info:
     id: "shopkeeper_info"
     text: "A silver locket, hmm? Now that you mention it, I did see young Tim playing with something shiny near the garden yesterday. Could've been a locket."
-    speaker: "Mr. Harrison"
+    speaker: "shopkeeper"
     emotional_state: "Neutral"
     inner_voice_comments:
       - voice_type: "Logic"
@@ -549,7 +549,7 @@ dialogue_trees:
   shopkeeper_annoyed:
     id: "shopkeeper_annoyed"
     text: "Well, it's all I know. Take it or leave it."
-    speaker: "Mr. Harrison"
+    speaker: "shopkeeper"
     emotional_state: "Angry"
     inner_voice_comments: []
     options:
@@ -578,7 +578,7 @@ dialogue_trees:
   gardener_default:
     id: "gardener_default"
     text: "Lovely day to be enjoying the garden, isn't it? The roses are particularly fragrant this season."
-    speaker: "Old Tom"
+    speaker: "gardener"
     emotional_state: "Neutral"
     inner_voice_comments: []
     options:
@@ -595,7 +595,7 @@ dialogue_trees:
   gardener_locket_info:
     id: "gardener_locket_info"
     text: "A silver locket? Yes, I did see some children playing over by the east garden beds yesterday. They were digging around in the soil. I had to shoo them away before they damaged my petunias."
-    speaker: "Old Tom"
+    speaker: "gardener"
     emotional_state: "Friendly"
     inner_voice_comments: []
     options:
@@ -606,7 +606,7 @@ dialogue_trees:
   gardener_chat:
     id: "gardener_chat"
     text: "Oh, going on twenty years now. Started when my knees were better, that's for sure!"
-    speaker: "Old Tom"
+    speaker: "gardener"
     emotional_state: "Neutral"
     inner_voice_comments: []
     options:

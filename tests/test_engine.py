@@ -8,22 +8,61 @@ def setup_engine():
     # Mock configuration and locations
     mock_config = MagicMock(spec=GameConfig)
     mock_config.locations = {
-        "warehouse_entrance": Location(id="warehouse_entrance",name="Warehouse Entrance", description="You are at the starting point.", connected_locations=["warehouse_office", "town_square"]),
-        "warehouse_office": Location(id="warehouse_office",name="Warehouse Office", description="A dusty office filled with old papers.", connected_locations=["warehouse_entrance"]),
-        "town_square": Location(id="town_square",name="Town Square", description="A bustling town square with shops and people.", connected_locations=["warehouse_entrance"]),
+        "warehouse_entrance": Location(
+            id="warehouse_entrance",
+            name="Warehouse Entrance", 
+            description="You are at the starting point.", 
+            connected_locations=["warehouse_office", "town_square"]
+        ),
+        "warehouse_office": Location(
+            id="warehouse_office",
+            name="Warehouse Office", 
+            description="A dusty office filled with old papers.", 
+            connected_locations=["warehouse_entrance"]
+        ),
+        "town_square": Location(
+            id="town_square",
+            name="Town Square", 
+            description="A bustling town square with shops and people.", 
+            connected_locations=["warehouse_entrance"]
+        ),
     }
+    
+    # Create a simple NPC class for testing
+    class TestNPC:
+        def __init__(self, id, name, location, gender):
+            self.id = id
+            self.name = name
+            self.location = location
+            self.gender = gender
+    
+    # Mock NPCs using the test class instead of MagicMock
+    mock_config.npcs = {
+        "worker_chen": TestNPC(
+            id="worker_chen",
+            name="Sarah Chen",
+            location="warehouse_entrance",
+            gender="female"
+        ),
+        "guard_martinez": TestNPC(
+            id="guard_martinez",
+            name="Officer Martinez",
+            location="warehouse_office",
+            gender="male"
+        )
+    }
+
+    # Other mock config settings remain the same
     mock_config.game_settings = MagicMock(spec=GameSettings)
     mock_config.game_settings.title = "Test Game"
     mock_config.game_settings.default_time = "day"
     mock_config.game_settings.starting_location = "warehouse_entrance"
     mock_config.quests = {}
     mock_config.items = {}
-    mock_config.npcs = {}
     mock_config.clues = {}
     mock_config.dialogue_trees = {}
     mock_config.inner_voices = {}
     mock_config.thoughts = {}
-
 
     # Initialize GameEngine
     engine = GameEngine(mock_config)
@@ -138,3 +177,21 @@ def test_movement_with_natural_language(setup_engine):
         response = engine.process_input(command)
         assert engine.current_location == "warehouse_office", f"Failed on command: {command}"
         assert engine.previous_location == "warehouse_entrance"
+
+def test_npc_pronoun_matching(setup_engine):
+    engine, _ = setup_engine
+    engine.current_location = "warehouse_entrance"
+    
+    # Test single female match
+    matched_id, ambiguous = engine._find_matching_npc("her")
+    assert matched_id == "worker_chen"
+    assert not ambiguous
+
+def test_npc_name_matching(setup_engine):
+    engine, _ = setup_engine
+    engine.current_location = "warehouse_entrance"
+    
+    # Test various name matches
+    assert engine._find_matching_npc("sarah")[0] == "worker_chen"
+    assert engine._find_matching_npc("chen")[0] == "worker_chen"
+    assert engine._find_matching_npc("sarah chen")[0] == "worker_chen"

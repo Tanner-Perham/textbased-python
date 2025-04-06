@@ -34,7 +34,7 @@ class GameEngine:
         self.save_manager = SaveManager()
 
         # Dialogue system (will be set externally)
-        self.dialogue_handler = None
+        self.dialogue_handler: Optional[DialogueManager] = None  # Update type hint
 
         # Notification system
         self.pending_notifications = []
@@ -68,8 +68,15 @@ class GameEngine:
             return f"You examine the {item} closely."
 
         elif parts[0] in ["talk", "speak"] and len(parts) > 1:
-            npc = parts[1]
-            return f"Use the dialogue system for talking to NPCs"
+            npc_parts = parts[1:]
+
+            # Remove common connecting words
+            connecting_words = ["to", "with", "the", "about"]
+            npc_name = " ".join(word for word in npc_parts if word.lower() not in connecting_words)
+            if not npc_name:
+                return "Who would you like to talk to?"
+            
+            return self._handle_talk_to_npc(npc_name)
 
         elif parts[0] in ["go", "walk", "move", "head"]:
             # Extract direction from the remaining parts of the command
@@ -487,3 +494,82 @@ class GameEngine:
                 "  help - Display this list of commands",
             ]
         )
+
+    def _find_matching_npc(self, npc_descriptor: str) -> tuple[Optional[str], list[str]]:
+        """
+        Find matching NPC(s) based on a descriptor (name, role, or pronoun).
+        Returns tuple of (matched_npc_id, list_of_ambiguous_npcs).
+        """
+        # Get NPCs in current location
+        npcs_here = [
+            npc for npc in self.config.npcs.values()
+            if npc.location == self.current_location
+        ]
+        
+        if not npcs_here:
+            return None, []
+
+        # Check for pronoun matches (using gender field)
+        npc_descriptor = npc_descriptor.lower()
+        if npc_descriptor in ['he', 'him', 'his']:
+            matching_npcs = [npc for npc in npcs_here if npc.gender == 'male']
+            if len(matching_npcs) == 1:
+                return matching_npcs[0].id, []
+            elif len(matching_npcs) > 1:
+                return None, [npc.name for npc in matching_npcs]
+        elif npc_descriptor in ['she', 'her', 'hers']:
+            matching_npcs = [npc for npc in npcs_here if npc.gender == 'female']
+            if len(matching_npcs) == 1:
+                return matching_npcs[0].id, []
+            elif len(matching_npcs) > 1:
+                return None, [npc.name for npc in matching_npcs]
+
+        # Check for name matches
+        matching_npcs = []
+        for npc in npcs_here:
+            # Check full name match (case insensitive)
+            if npc_descriptor in npc.name.lower():
+                matching_npcs.append(npc)
+                continue
+            
+            # Check first/last name matches for NPCs with multiple name parts
+            name_parts = npc.name.lower().split()
+            matches = [part for part in name_parts if npc_descriptor in part]
+            if len(matches) > 0:
+                matching_npcs.append(npc)
+                continue
+
+        if len(matching_npcs) == 1:
+            return matching_npcs[0].id, []
+        elif len(matching_npcs) > 1:
+            return None, [npc.name for npc in matching_npcs]
+        
+        return None, []
+
+    def _handle_talk_to_npc(self, npc_name: str) -> str:
+        """Handle talking to an NPC."""
+        if not npc_name:
+            return "Who would you like to talk to?"
+
+        # Try to find matching NPC
+        matched_npc_id, ambiguous_npcs = self._find_matching_npc(npc_name)
+        
+        # Handle ambiguous matches
+        if ambiguous_npcs:
+            return f"Who would you like to talk to? {' or '.join(ambiguous_npcs)}?"
+        
+        # Handle no matches
+        if not matched_npc_id:
+            # Get list of NPCs in current location for helpful message
+            npcs_here = [
+                npc.name for npc in self.config.npcs.values()
+                if npc.location == self.current_location
+            ]
+            if npcs_here:
+                return f"I don't see anyone like that here. You can talk to: {', '.join(npcs_here)}."
+            return "There's no one here to talk to."
+
+        # Proceed with dialogue
+        if self.dialogue_handler:
+            return self.dialogue_handler.start_dialogue(matched_npc_id, self.game_state)
+        return f"You try to talk to {npc_name}, but they don't respond."
