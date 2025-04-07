@@ -59,6 +59,11 @@ class GameEngine:
         if not parts:
             return "Please enter a command. Type 'help' for a list of commands."
 
+        # Add quit command handling at the start
+        if parts[0] in ["quit"]:
+            # Return a special response that the UI can check for
+            return "__quit__"
+
         # Process commands
         if parts[0] == "look" and len(parts) > 1 and parts[1] == "around":
             return self._handle_look_around()
@@ -491,6 +496,7 @@ class GameEngine:
                 "  load <name or #> - Load a saved game by name or number from the saves list",
                 "  quickload - Load the most recent quicksave",
                 "  saves - List all saved games",
+                "  quit/exit - Exit the game",
                 "  help - Display this list of commands",
             ]
         )
