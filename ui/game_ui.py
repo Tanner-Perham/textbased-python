@@ -118,7 +118,9 @@ class GameUI(App):
             return
 
         # Echo command
+        self.game_output.write("\n\n")
         self.game_output.write(f"> {command}")
+        self.game_output.write("\n\n")
         
         try:
             # Process command through game engine
@@ -129,6 +131,7 @@ class GameUI(App):
                 self.exit()
             else:
                 self.game_output.write(response)
+                self.game_output.write("\n\n")
                 
             # Update location if it changed
             self.location_bar.location = self.game_engine.current_location
