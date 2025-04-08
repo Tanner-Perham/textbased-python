@@ -579,3 +579,23 @@ class GameEngine:
         if self.dialogue_handler:
             return self.dialogue_handler.start_dialogue(matched_npc_id, self.game_state)
         return f"You try to talk to {npc_name}, but they don't respond."
+
+    def upgrade_skill(self, skill_name: str) -> bool:
+        """Attempt to upgrade a skill using skill points."""
+        if (
+            skill_name in self.game_state.skills
+            and self.game_state.skill_points > 0
+        ):
+            self.game_state.skills[skill_name] += 1
+            self.game_state.skill_points -= 1
+            return True
+        return False
+
+    def add_experience(self, amount: int) -> None:
+        """Add experience points and handle level ups."""
+        self.game_state.experience += amount
+        # Every 100 XP grants a skill point
+        new_skill_points = self.game_state.experience // 100
+        if new_skill_points > 0:
+            self.game_state.skill_points += new_skill_points
+            self.game_state.experience %= 100

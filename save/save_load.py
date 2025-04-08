@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from game.game_state import (Clue, GameState, Item, Player, QuestStatus,
-                             Skills, TimeOfDay)
+                             TimeOfDay)
 
 # The directory where saves will be stored
 SAVE_DIR = "saves"

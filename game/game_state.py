@@ -23,21 +23,9 @@ class TimeOfDay(Enum):
 
 
 @dataclass
-class Skills:
-    """Player skills."""
-    logic: int = 10
-    empathy: int = 10
-    perception: int = 10
-    authority: int = 10
-    suggestion: int = 10
-    composure: int = 10
-
-
-@dataclass
 class Player:
     """Player character information."""
     name: str = "Detective"
-    skills: Skills = field(default_factory=Skills)
     inner_voices: List[Any] = field(default_factory=list)
     thought_cabinet: List[Any] = field(default_factory=list)
     health: int = 100
@@ -62,29 +50,51 @@ class Clue:
     discovered: bool = False
 
 
+@dataclass
 class GameState:
     """
     Maintains the current state of the game, including player attributes,
     inventory, quests, and world state.
     """
-    
-    def __init__(self):
-        """Initialize a new game state with default values."""
-        self.player: Player = Player()
-        self.current_location: str = "starting_location"
-        self.previous_location: Optional[str] = None
-        self.inventory: List[Item] = []
+    current_location: str = ""
+    previous_location: Optional[str] = None
+    inventory: List[str] = field(default_factory=list)
+    quests: Dict[str, str] = field(default_factory=dict)
+    # Initialize skills with all available skills
+    skills: Dict[str, int] = field(default_factory=lambda: {
+        # Investigation skills
+        "logic": 10,
+        "empathy": 10,
+        "perception": 10,
+        "authority": 10,
+        "suggestion": 10,
+        "composure": 10,
+        # Physical skills
+        "strength": 1,
+        "agility": 1,
+        "endurance": 1,
+        # Mental skills
+        "intelligence": 1,
+        "charisma": 1
+    })
+    skill_points: int = 0
+    experience: int = 0
+
+    def __post_init__(self):
+        """Initialize additional state after dataclass initialization."""
+        self.current_location = "starting_location"
+        self.inventory = []
         self.quest_log: Dict[str, QuestStatus] = {}
         self.discovered_clues: List[Clue] = []
         self.time_of_day: TimeOfDay = TimeOfDay.Morning
         self.visited_locations: Set[str] = set()
-        self.completed_objectives: Dict[str, Set[str]] = {}  # quest_id -> Set of objective_ids
-        self.active_quest_stages: Dict[str, str] = {}  # quest_id -> active_stage_id
-        self.taken_quest_branches: Dict[str, Set[str]] = {}  # quest_id -> Set of branch_ids
-        self.npc_interactions: Dict[str, int] = {}  # npc_id -> interaction count
-        self.quest_items: Dict[str, Set[str]] = {}  # quest_id -> Set of item_ids
-        self.relationship_values: Dict[str, int] = {}  # npc_id -> relationship score
-    
+        self.completed_objectives: Dict[str, Set[str]] = {}
+        self.active_quest_stages: Dict[str, str] = {}
+        self.taken_quest_branches: Dict[str, Set[str]] = {}
+        self.npc_interactions: Dict[str, int] = {}
+        self.quest_items: Dict[str, Set[str]] = {}
+        self.relationship_values: Dict[str, int] = {}
+
     def add_item(self, item: Item) -> None:
         """Add an item to the player's inventory."""
         self.inventory.append(item)
@@ -101,11 +111,16 @@ class GameState:
         """Update a quest's status in the quest log."""
         self.quest_log[quest_id] = status
     
-    def modify_skill(self, skill_name: str, amount: int) -> None:
-        """Modify a player skill by the given amount."""
-        if hasattr(self.player.skills, skill_name):
-            current_value = getattr(self.player.skills, skill_name)
-            setattr(self.player.skills, skill_name, current_value + amount)
+    def modify_skill(self, skill_name: str, amount: int) -> bool:
+        """Modify a skill by the given amount. Returns True if successful."""
+        if skill_name in self.skills:
+            self.skills[skill_name] += amount
+            return True
+        return False
+
+    def get_skill(self, skill_name: str) -> int:
+        """Get the current value of a skill."""
+        return self.skills.get(skill_name, 0)
     
     def change_location(self, location_id: str) -> None:
         """Change the player's current location."""

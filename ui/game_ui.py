@@ -2,6 +2,10 @@ from textual.app import App, ComposeResult
 from textual.containers import ScrollableContainer, Vertical, Horizontal
 from textual.widgets import Header, Footer, Input, Static, Log
 from textual.reactive import reactive
+from textual.binding import Binding
+from textual.screen import Screen
+from textual.keys import Keys
+from .overlay import GameOverlay
 
 class GameOutput(Log):
     """Widget for game output with scrolling."""
@@ -57,6 +61,13 @@ class LocationBar(Static):
 
 class GameUI(App):
     """Main game interface."""
+    
+    # Define key bindings with key combinations instead of single keys
+    BINDINGS = [
+        ("ctrl+o", "toggle_overlay", "Menu"),
+        ("escape", "close_overlay", "Close"),
+    ]
+
     CSS = """
     Screen {
         layout: grid;
@@ -84,6 +95,10 @@ class GameUI(App):
         content-align: left middle;
     }
     """
+
+    def __init__(self):
+        super().__init__()
+        self.overlay = None
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -137,3 +152,22 @@ class GameUI(App):
             self.location_bar.location = self.game_engine.current_location
         except Exception as e:
             self.game_output.write(f"Error: {str(e)}")
+
+    def action_toggle_overlay(self) -> None:
+        """Toggle the game overlay."""
+        if isinstance(self.screen, GameOverlay):
+            self.pop_screen()
+        else:
+            self.push_screen(GameOverlay())
+
+    def action_close_overlay(self) -> None:
+        """Close the overlay if it's open."""
+        if isinstance(self.screen, GameOverlay):
+            self.pop_screen()
+
+    def on_key(self, event) -> None:
+        """Handle key events."""
+        # Check for Tab key specifically
+        if event.key == "tab":
+            event.prevent_default()  # Prevent default tab behavior
+            self.action_toggle_overlay()
