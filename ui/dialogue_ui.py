@@ -90,7 +90,10 @@ class DialogueMode:
     def add_to_history(self, response: DialogueResponse) -> None:
         """Add a dialogue response to the history."""
         if isinstance(response, DialogueResponse.Speech):
-            self.dialogue_history.append(f"{response.speaker}: {response.text}")
+            # Use NPC name if speaker matches an NPC ID, otherwise use speaker directly
+            speaker_name = self.game_ui.game_engine.config.npcs.get(response.speaker, None)
+            display_name = speaker_name.name if speaker_name else response.speaker
+            self.dialogue_history.append(f"{display_name}: {response.text}")
         elif isinstance(response, DialogueResponse.InnerVoice):
             self.dialogue_history.append(f"[{response.voice_type}] {response.text}")
         elif isinstance(response, DialogueResponse.SkillCheck):

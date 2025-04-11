@@ -123,7 +123,7 @@ locations:
       - "warehouse_entrance"
 
 npcs:
-  security_guard:
+  guard_martinez:
     id: "guard_martinez"
     name: "Officer Martinez"
     dialogue_entry_point: "martinez_intro"
@@ -131,7 +131,7 @@ npcs:
     location: "warehouse_office"
     gender: "male"
 
-  warehouse_worker:
+  worker_chen:
     id: "worker_chen"
     name: "Sarah Chen"
     dialogue_entry_point: "chen_intro"
