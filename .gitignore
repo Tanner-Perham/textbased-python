@@ -3,3 +3,4 @@ __pycache__/
 */__pycache__/
 .vscode/
 saves/
+textbased_python.egg-info
