@@ -11,7 +11,6 @@ from typing import Optional, Tuple
 from config.config_loader import GameConfig
 from dialogue.manager import DialogueManager
 from dialogue.response import DialogueResponse
-from game.dialogue_integration import DialogueHandler
 from game.engine import GameEngine
 from ui.dialogue_ui import DialogueUI
 from ui.game_ui import GameUI

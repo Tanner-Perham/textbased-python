@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from config.config_loader import GameConfig
 from dialogue.manager import DialogueManager
-from game.dialogue_integration import DialogueHandler
 from game.game_state import GameState, QuestStatus
 from quest.quest_manager import QuestManager
 from save.save_load import SaveManager

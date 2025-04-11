@@ -82,7 +82,6 @@ class DialogueManager:
 
     def _determine_entry_point(self, npc_id: str, game_state: GameState) -> str:
         """Determine the appropriate dialogue entry point."""
-        # This could be expanded based on relationship, time of day, quests, etc.
         return f"{npc_id}_default"
 
     def process_node(
@@ -119,19 +118,15 @@ class DialogueManager:
         self, comment: InnerVoiceComment, game_state: GameState
     ) -> bool:
         """Determine if an inner voice comment should trigger."""
-        # Check skill requirement
         if comment.skill_requirement:
             skill_name = comment.voice_type.lower()
             player_skill = 0
 
-            # Get corresponding player skill value
-            if hasattr(game_state.player.skills, skill_name):
-                player_skill = getattr(game_state.player.skills, skill_name)
+            if hasattr(game_state.skills, skill_name):
+                player_skill = getattr(game_state.skills, skill_name)
 
-            # Return true if player skill meets requirement
             return player_skill >= comment.skill_requirement
 
-        # Default to true if no requirements
         return True
 
     def get_available_options(
@@ -150,11 +145,9 @@ class DialogueManager:
         """Check if conditions for a dialogue option are met."""
         conditions = option.conditions
 
-        # If no conditions, always available
         if not conditions:
             return True
 
-        # Check required items
         if "required_items" in conditions:
             has_items = all(
                 any(item.id == item_id for item in game_state.inventory)
@@ -163,7 +156,6 @@ class DialogueManager:
             if not has_items:
                 return False
 
-        # Check required clues
         if "required_clues" in conditions:
             has_clues = all(
                 any(clue.id == clue_id for clue in game_state.discovered_clues)
@@ -172,7 +164,6 @@ class DialogueManager:
             if not has_clues:
                 return False
 
-        # Check quest status
         if "required_quests" in conditions:
             quest_status_ok = all(
                 game_state.quest_log.get(quest_id) == status
@@ -180,8 +171,6 @@ class DialogueManager:
             )
             if not quest_status_ok:
                 return False
-
-        # More conditions could be added as needed
 
         return True
 
@@ -195,30 +184,24 @@ class DialogueManager:
         if not option:
             return responses
 
-        # Save data before processing
         default_next_node = option.next_node
         success_node = option.success_node
         failure_node = option.failure_node
         skill_check_success = False
 
-        # Process skill check if present
         if option.skill_check:
             skill_check_response = self._process_skill_check(
                 option.skill_check, game_state
             )
             responses.append(skill_check_response)
 
-            # Store result for node selection
             if isinstance(skill_check_response, DialogueResponse.SkillCheck):
                 skill_check_success = skill_check_response.success
 
-        # Apply emotional changes
         self._apply_emotional_changes(option.emotional_impact)
 
-        # Process effects
         self._process_effects(option.consequences, game_state)
 
-        # Process inner voice reactions
         for reaction in option.inner_voice_reactions:
             if self._should_trigger_inner_voice(reaction, game_state):
                 responses.append(
@@ -227,10 +210,8 @@ class DialogueManager:
                     )
                 )
 
-        # Update dialogue history
         self.dialogue_history.append(option_id)
 
-        # Determine next node
         next_node = ""
         if option.skill_check:
             if skill_check_success and success_node:
@@ -242,7 +223,6 @@ class DialogueManager:
         else:
             next_node = default_next_node
 
-        # Process next node if specified
         if next_node:
             self.current_node = next_node
             responses.extend(self.process_node(next_node, game_state))
@@ -262,31 +242,25 @@ class DialogueManager:
         self, check: EnhancedSkillCheck, game_state: GameState
     ) -> DialogueResponse.SkillCheck:
         """Process a skill check and return the result."""
-        # Get base difficulty
         difficulty = check.base_difficulty
 
-        # Apply emotional modifiers
         current_emotion = self.emotional_states.get(self.current_node)
         if current_emotion and current_emotion in check.emotional_modifiers:
             difficulty += check.emotional_modifiers[current_emotion]
 
-        # Get player's skill value
         player_skill = 0
-        if hasattr(game_state.player.skills, check.primary_skill):
-            player_skill = getattr(game_state.player.skills, check.primary_skill)
+        if hasattr(game_state.skills, check.primary_skill):
+            player_skill = getattr(game_state.skills, check.primary_skill)
 
-        # Add supporting skills
         for skill_name, factor in check.supporting_skills:
-            if hasattr(game_state.player.skills, skill_name):
+            if hasattr(game_state.skills, skill_name):
                 supporting_value = int(
-                    getattr(game_state.player.skills, skill_name) * factor
+                    getattr(game_state.skills, skill_name) * factor
                 )
                 player_skill += supporting_value
 
-        # Roll for skill check
         roll = random.randint(1, 20)
 
-        # Determine success
         success = (roll + player_skill) >= difficulty
 
         return DialogueResponse.SkillCheck(
@@ -295,11 +269,9 @@ class DialogueManager:
 
     def _apply_emotional_changes(self, changes: Dict[str, int]) -> None:
         """Apply emotional changes from dialogue."""
-        # This would update NPC emotional states
         if not changes:
             return
 
-        # Implementation depends on how emotions are tracked
         for emotion, value in changes.items():
             self.emotional_states[self.current_node] = emotion
 
@@ -327,8 +299,6 @@ class DialogueManager:
             elif effect_type == "AdvanceQuest":
                 quest_id, stage_id = data
                 game_state.advance_quest(quest_id, stage_id)
-
-            # Additional effect types can be handled here
 
             elif effect_type == "CompleteQuestObjective":
                 quest_id, objective_id = data

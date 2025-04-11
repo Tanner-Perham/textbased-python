@@ -78,6 +78,22 @@ Footer {
     100% { background: $primary-background; }
 }
 
+DialogueOption {
+    width: 100%;
+    height: auto;
+    padding: 1;
+    margin: 0 0 1 0;
+    background: $surface;
+    color: $text;
+    border: none;
+}
+
+DialogueOption:hover {
+    background: $surface-lighten-1;
+}
+
 DialogueOption.selected {
-    animation: pulse 2s infinite;
+    background: $primary-background;
+    color: $text;
+    border-left: heavy $accent;
 }

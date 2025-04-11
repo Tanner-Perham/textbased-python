@@ -4,19 +4,14 @@ Dialogue UI module for handling NPC conversations.
 
 from typing import List, Optional, Tuple
 
-from textual import events, on
+from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container, ScrollableContainer
 from textual.reactive import reactive
-from textual.widgets import Button, Footer, Static
+from textual.widgets import Footer, Static
 
 from dialogue.response import DialogueResponse
-from ui.dialogue_components import (
-    DialogueOption,
-    InnerVoice,
-    SkillCheckResult,
-    SpeechBubble,
-)
+from ui.dialogue_components import DialogueOption, InnerVoice, SkillCheckResult, SpeechBubble
 
 
 class DialogueUI(App):
@@ -28,21 +23,15 @@ class DialogueUI(App):
         ("down", "select_next", "Next"),
         ("enter", "select", "Select"),
         ("escape", "quit", "Exit"),
-        ("pageup", "scroll_up", "Scroll Up"),
-        ("pagedown", "scroll_down", "Scroll Down"),
     ]
 
     selected_index = reactive(0)
     options = reactive([])
-    npc_name = reactive("")
 
     def __init__(self, npc_name: str):
         """Initialize dialogue UI with NPC name."""
         super().__init__()
         self.npc_name = npc_name
-        self.options = []
-        self.selected_index = 0
-        self.result = ""
         self.dialogue_history = []
 
     def compose(self) -> ComposeResult:
@@ -80,32 +69,10 @@ class DialogueUI(App):
     def action_select(self) -> None:
         """Select the current dialogue option."""
         if not self.options:
-            # If no options available, exit dialogue
-            self.action_quit()
             return
 
         selected_option = self.options[self.selected_index]
-        self.result = selected_option.id
-
-        # Add player's response to history
-        self.add_to_history(
-            DialogueResponse.Speech(
-                speaker="PLAYER", text=selected_option.text, emotion="Neutral"
-            )
-        )
-
-        # This will signal to the calling code that an option was selected
         self.exit(selected_option.id)
-
-    def action_scroll_up(self) -> None:
-        """Scroll the dialogue history up."""
-        history = self.query_one("#dialogue-history")
-        history.scroll_up(5)
-
-    def action_scroll_down(self) -> None:
-        """Scroll the dialogue history down."""
-        history = self.query_one("#dialogue-history")
-        history.scroll_down(5)
 
     def update_options(self) -> None:
         """Update the display of dialogue options."""
@@ -150,6 +117,7 @@ class DialogueUI(App):
 
         for response in responses:
             if isinstance(response, DialogueResponse.Options):
+                # Extract the options list
                 new_options = response.options
             else:
                 self.add_to_history(response)
