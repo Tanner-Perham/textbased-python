@@ -24,13 +24,19 @@ class DialogueMode:
         self.options = []
         self.dialogue_history = []
         self.is_active = False
+        self.current_dialogue_buffer = []  # Buffer for current dialogue state
+        self.stored_game_history = []  # Buffer for storing game history during dialogue
 
     def start_dialogue(self, npc_name: str, responses: List[DialogueResponse]) -> None:
         """Start a dialogue with an NPC."""
+        # Store the current game history
+        self.stored_game_history = self.game_ui.game_output.lines.copy()
+        
         self.npc_name = npc_name
         self.is_active = True
         self.selected_index = 0
         self.dialogue_history = []
+        self.current_dialogue_buffer = []  # Clear buffer
         self.process_responses(responses)
         self.update_display()
         # Set focus to the input box
@@ -39,8 +45,17 @@ class DialogueMode:
     def end_dialogue(self) -> None:
         """End the current dialogue."""
         if self.is_active:
-            # Add conversation end marker to history
-            self.game_ui.game_output.write("\n=== Conversation ended ===\n\n")
+            # Add conversation end marker to buffer
+            self.current_dialogue_buffer.append("\n=== Conversation ended ===\n")
+            
+            # Clear the game output
+            self.game_ui.game_output.clear()
+            
+            # Restore the game history and append the dialogue
+            self.game_ui.game_output.write("\n".join(self.stored_game_history))
+            self.game_ui.game_output.write("\n")
+            self.game_ui.game_output.write("\n".join(self.current_dialogue_buffer))
+            self.game_ui.game_output.write("\n\n")
             
             # Reset dialogue state
             self.is_active = False
@@ -48,6 +63,8 @@ class DialogueMode:
             self.selected_index = 0
             self.options = []
             self.dialogue_history = []
+            self.current_dialogue_buffer = []
+            self.stored_game_history = []
             self.game_ui.game_input.placeholder = "Enter your command..."
             # Keep focus on the input box
             self.game_ui.game_input.focus()
@@ -128,21 +145,50 @@ class DialogueMode:
         else:
             self.game_ui.game_input.placeholder = "No options available"
 
-        # Show dialogue history and options in the game output
+        # Build the current dialogue state
         output = []
         
         # Add a header for the conversation
-        output.append(f"=== Conversation with {self.npc_name} ===\n")
+        output.append(f"\n=== Conversation with {self.npc_name} ===\n")
         
-        # Add dialogue history
-        output.extend(self.dialogue_history)
+        # Add dialogue history with proper spacing
+        for item in self.dialogue_history:
+            # Add extra spacing between dialogue entries
+            output.append("")
+            # Split long lines into multiple lines
+            wrapped_lines = []
+            for line in item.split('\n'):
+                # Wrap long lines at 80 characters
+                while len(line) > 80:
+                    # Find the last space before 80 characters
+                    split_pos = line[:80].rfind(' ')
+                    if split_pos == -1:
+                        split_pos = 80
+                    wrapped_lines.append(line[:split_pos])
+                    line = line[split_pos:].lstrip()
+                wrapped_lines.append(line)
+            output.extend(wrapped_lines)
         
         # Add options if available
         if self.options:
             output.append("\nOptions:")
             for i, option in enumerate(self.options):
                 prefix = "> " if i == self.selected_index else "  "
-                output.append(f"{prefix}{option.text}")
+                # Wrap long option text
+                wrapped_option = []
+                line = option.text
+                while len(line) > 80:
+                    split_pos = line[:80].rfind(' ')
+                    if split_pos == -1:
+                        split_pos = 80
+                    wrapped_option.append(f"{prefix}{line[:split_pos]}")
+                    line = line[split_pos:].lstrip()
+                    prefix = "  "  # Indent wrapped lines
+                wrapped_option.append(f"{prefix}{line}")
+                output.extend(wrapped_option)
+        
+        # Update the buffer with current state
+        self.current_dialogue_buffer = output
         
         # Write the formatted output
         self.game_ui.game_output.write("\n".join(output))
