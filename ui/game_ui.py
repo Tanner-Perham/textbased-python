@@ -6,6 +6,7 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.keys import Keys
 from .overlay import GameOverlay
+from .dialogue_ui import DialogueMode
 
 class GameOutput(Log):
     """Widget for game output with scrolling."""
@@ -66,6 +67,9 @@ class GameUI(App):
     BINDINGS = [
         ("ctrl+o", "toggle_overlay", "Menu"),
         ("escape", "close_overlay", "Close"),
+        ("up", "select_previous", "Previous"),
+        ("down", "select_next", "Next"),
+        ("enter", "select", "Select"),
     ]
 
     CSS = """
@@ -99,6 +103,7 @@ class GameUI(App):
     def __init__(self):
         super().__init__()
         self.overlay = None
+        self.dialogue_mode = DialogueMode(self)
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -132,6 +137,11 @@ class GameUI(App):
         if not command:
             return
 
+        # If in dialogue mode, handle enter key as option selection
+        if self.dialogue_mode.is_active:
+            self.action_select()
+            return
+
         # Echo command
         self.game_output.write("\n\n")
         self.game_output.write(f"> {command}")
@@ -153,6 +163,36 @@ class GameUI(App):
         except Exception as e:
             self.game_output.write(f"Error: {str(e)}")
 
+    def action_select_previous(self) -> None:
+        """Select the previous dialogue option."""
+        if self.dialogue_mode.is_active:
+            self.dialogue_mode.select_previous()
+            # Keep focus on the input box
+            self.game_input.focus()
+
+    def action_select_next(self) -> None:
+        """Select the next dialogue option."""
+        if self.dialogue_mode.is_active:
+            self.dialogue_mode.select_next()
+            # Keep focus on the input box
+            self.game_input.focus()
+
+    def action_select(self) -> None:
+        """Select the current dialogue option."""
+        if self.dialogue_mode.is_active:
+            selected_option_id = self.dialogue_mode.select_current()
+            if selected_option_id == "end_conversation":
+                self.dialogue_mode.end_dialogue()
+            else:
+                # Process the selected option through the dialogue handler
+                responses = self.game_engine.dialogue_handler.select_option(
+                    selected_option_id, self.game_engine.game_state
+                )
+                self.dialogue_mode.process_responses(responses)
+                self.dialogue_mode.update_display()
+            # Keep focus on the input box
+            self.game_input.focus()
+
     def action_toggle_overlay(self) -> None:
         """Toggle the game overlay."""
         if isinstance(self.screen, GameOverlay):
@@ -164,10 +204,30 @@ class GameUI(App):
         """Close the overlay if it's open."""
         if isinstance(self.screen, GameOverlay):
             self.pop_screen()
+        elif self.dialogue_mode.is_active:
+            self.dialogue_mode.end_dialogue()
+            # Keep focus on the input box
+            self.game_input.focus()
 
     def on_key(self, event) -> None:
         """Handle key events."""
-        # Check for Tab key specifically
+        # If in dialogue mode and input is focused, handle arrow keys and enter
+        if self.dialogue_mode.is_active and self.game_input.has_focus:
+            if event.key == "up":
+                event.prevent_default()
+                self.action_select_previous()
+            elif event.key == "down":
+                event.prevent_default()
+                self.action_select_next()
+            elif event.key == "enter":
+                event.prevent_default()
+                self.action_select()
+            elif event.key == "tab":
+                event.prevent_default()
+                self.action_toggle_overlay()
+            return
+
+        # Handle tab key for overlay
         if event.key == "tab":
-            event.prevent_default()  # Prevent default tab behavior
+            event.prevent_default()
             self.action_toggle_overlay()

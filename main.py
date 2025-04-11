@@ -12,7 +12,7 @@ from config.config_loader import GameConfig
 from dialogue.manager import DialogueManager
 from dialogue.response import DialogueResponse
 from game.engine import GameEngine
-from ui.dialogue_ui import DialogueUI
+from ui.dialogue_ui import DialogueMode
 from ui.game_ui import GameUI
 from textual.app import App
 
@@ -48,6 +48,7 @@ def main():
     # Create and run the UI
     app = GameUI()
     app.game_engine = game_engine  # Attach game engine to UI
+    game_engine.ui = app  # Attach UI to game engine
     app.title = config.game_settings.title
     
     return app

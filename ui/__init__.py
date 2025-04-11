@@ -8,4 +8,4 @@ from ui.dialogue_components import (
     SkillCheckResult,
     SpeechBubble,
 )
-from ui.dialogue_ui import DialogueUI
+from ui.dialogue_ui import DialogueMode

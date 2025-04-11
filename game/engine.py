@@ -11,6 +11,8 @@ from dialogue.manager import DialogueManager
 from game.game_state import GameState, QuestStatus
 from quest.quest_manager import QuestManager
 from save.save_load import SaveManager
+from ui.dialogue_ui import DialogueMode
+from dialogue.response import DialogueResponse
 
 
 class GameEngine:
@@ -576,7 +578,34 @@ class GameEngine:
 
         # Proceed with dialogue
         if self.dialogue_handler:
-            return self.dialogue_handler.start_dialogue(matched_npc_id, self.game_state)
+            # Get the NPC's display name for the UI
+            npc = self.config.npcs.get(matched_npc_id)
+            npc_display_name = npc.name if npc else matched_npc_id
+            
+            # Get dialogue responses
+            responses = self.dialogue_handler.start_dialogue(matched_npc_id, self.game_state)
+            
+            # Start dialogue mode in the UI
+            if hasattr(self, 'ui') and self.ui:
+                self.ui.dialogue_mode.start_dialogue(npc_display_name, responses)
+                return ""  # Empty response since UI will handle display
+            else:
+                # Fallback to text-based display if UI is not available
+                dialogue_text = []
+                for response in responses:
+                    if isinstance(response, DialogueResponse.Speech):
+                        dialogue_text.append(f"{response.speaker}: {response.text}")
+                    elif isinstance(response, DialogueResponse.Options):
+                        dialogue_text.append("\nOptions:")
+                        for option in response.options:
+                            dialogue_text.append(f"- {option.text}")
+                    elif isinstance(response, DialogueResponse.InnerVoice):
+                        dialogue_text.append(f"[{response.voice_type}] {response.text}")
+                    elif isinstance(response, DialogueResponse.SkillCheck):
+                        result = "Success" if response.success else "Failure"
+                        dialogue_text.append(f"[Skill Check: {response.skill} - {result}]")
+                
+                return "\n".join(dialogue_text)
         return f"You try to talk to {npc_name}, but they don't respond."
 
     def upgrade_skill(self, skill_name: str) -> bool:
