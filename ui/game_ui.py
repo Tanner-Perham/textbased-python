@@ -185,6 +185,7 @@ class GameUI(App):
                 self.dialogue_mode.end_dialogue()
             else:
                 # Process the selected option through the dialogue handler
+                print(f"GameUI: Selecting option {selected_option_id}")
                 responses = self.game_engine.dialogue_handler.select_option(
                     selected_option_id, self.game_engine.game_state
                 )

@@ -4,16 +4,12 @@ This module manages the game state, including player attributes, inventory, ques
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Set, Tuple
+from game.quest_status import QuestStatus
+from quest.quest_state import QuestState
+from config.config_loader import Quest, QuestStage, Item, Clue
 
 
-class QuestStatus(Enum):
-    """Status of a quest."""
-    NotStarted = auto()
-    InProgress = auto()
-    Completed = auto()
-    Failed = auto()
-
-
+@dataclass
 class TimeOfDay(Enum):
     """Time of day in the game world."""
     Morning = auto()
@@ -51,50 +47,149 @@ class Clue:
 
 
 @dataclass
+class Quest:
+    """Information about a quest."""
+    id: str
+    title: str
+    description: str
+    short_description: str
+    objectives: List[str]
+    status: QuestStatus
+
+
+@dataclass
 class GameState:
-    """
-    Maintains the current state of the game, including player attributes,
-    inventory, quests, and world state.
-    """
-    current_location: str = ""
-    previous_location: Optional[str] = None
-    inventory: List[str] = field(default_factory=list)
-    quests: Dict[str, str] = field(default_factory=dict)
-    # Initialize skills with all available skills
-    skills: Dict[str, int] = field(default_factory=lambda: {
-        # Investigation skills
-        "logic": 10,
-        "empathy": 10,
-        "perception": 10,
-        "authority": 10,
-        "suggestion": 10,
-        "composure": 10,
-        # Physical skills
-        "strength": 1,
-        "agility": 1,
-        "endurance": 1,
-        # Mental skills
-        "intelligence": 1,
-        "charisma": 1
-    })
-    skill_points: int = 0
-    experience: int = 0
-
-    def __post_init__(self):
-        """Initialize additional state after dataclass initialization."""
-        self.current_location = "starting_location"
+    """Manages the current state of the game."""
+    
+    def __init__(self):
+        """Initialize the game state."""
+        self.player = None
+        self.current_location = None
+        self.previous_location = None
         self.inventory = []
-        self.quest_log: Dict[str, QuestStatus] = {}
-        self.discovered_clues: List[Clue] = []
-        self.time_of_day: TimeOfDay = TimeOfDay.Morning
-        self.visited_locations: Set[str] = set()
-        self.completed_objectives: Dict[str, Set[str]] = {}
-        self.active_quest_stages: Dict[str, str] = {}
-        self.taken_quest_branches: Dict[str, Set[str]] = {}
-        self.npc_interactions: Dict[str, int] = {}
-        self.quest_items: Dict[str, Set[str]] = {}
-        self.relationship_values: Dict[str, int] = {}
+        self._quest_state = QuestState()  # Make QuestState private
+        self.discovered_clues = []
+        self.time_of_day = TimeOfDay.Morning
+        self.visited_locations = set()
+        self.npc_interactions = {}  # Maps NPC ID to interaction count
+        self.relationship_values = {}  # Maps NPC ID to relationship value
+        self.skills = {}  # Maps skill name to skill level
 
+    # Quest State Access Methods
+    def add_quest(self, quest: Quest) -> None:
+        """Add a quest to the game state."""
+        print(f"GameState: Adding quest {quest.id}")
+        self._quest_state.add_quest(quest)
+
+    def get_quest(self, quest_id: str) -> Optional[Quest]:
+        """Get a quest by ID."""
+        return self._quest_state.get_quest(quest_id)
+
+    def get_quest_status(self, quest_id: str) -> Optional[QuestStatus]:
+        """Get a quest's status."""
+        return self._quest_state.get_quest_status(quest_id)
+
+    def update_quest_status(self, quest_id: str, status: QuestStatus) -> bool:
+        """Update a quest's status. Returns True if successful."""
+        print(f"GameState: Updating quest {quest_id} to {status}")
+        return self._quest_state.update_quest_status(quest_id, status)
+
+    def check_all_quest_updates(self) -> None:
+        """Check for all quest updates."""
+        self._quest_state.check_all_quest_updates()
+
+    def start_quest(self, quest_id: str) -> bool:
+        """Start a quest. Returns True if successful."""
+        print(f"GameState: Starting quest {quest_id}")
+        return self._quest_state.update_quest_status(quest_id, QuestStatus.InProgress)
+
+    def complete_quest(self, quest_id: str) -> bool:
+        """Complete a quest. Returns True if successful."""
+        print(f"GameState: Completing quest {quest_id}")
+        return self._quest_state.update_quest_status(quest_id, QuestStatus.Completed)
+
+    def fail_quest(self, quest_id: str) -> bool:
+        """Fail a quest. Returns True if successful."""
+        print(f"GameState: Failing quest {quest_id}")
+        return self._quest_state.update_quest_status(quest_id, QuestStatus.Failed)
+
+    def get_active_quests(self) -> List[Quest]:
+        """Get all active quests."""
+        return list(self._quest_state.get_active_quests().values())
+
+    def get_completed_quests(self) -> List[Quest]:
+        """Get all completed quests."""
+        return list(self._quest_state.get_completed_quests().values())
+
+    def get_failed_quests(self) -> List[Quest]:
+        """Get all failed quests."""
+        return list(self._quest_state.get_failed_quests().values())
+
+    def set_active_stage(self, quest_id: str, stage_id: str) -> None:
+        """Set the active stage for a quest."""
+        self._quest_state.set_active_stage(quest_id, stage_id)
+
+    def get_active_stage(self, quest_id: str) -> Optional[str]:
+        """Get the active stage ID for a quest."""
+        return self._quest_state.get_active_stage(quest_id)
+
+    def add_completed_objective(self, quest_id: str, objective_id: str) -> None:
+        """Mark an objective as completed."""
+        self._quest_state.add_completed_objective(quest_id, objective_id)
+
+    def is_objective_completed(self, quest_id: str, objective_id: str) -> bool:
+        """Check if an objective is completed."""
+        return self._quest_state.is_objective_completed(quest_id, objective_id)
+
+    def add_quest_branch(self, quest_id: str, branch_id: str) -> None:
+        """Add a quest branch to the taken branches."""
+        self._quest_state.add_quest_branch(quest_id, branch_id)
+
+    def has_taken_branch(self, quest_id: str, branch_id: str) -> bool:
+        """Check if a quest branch has been taken."""
+        return self._quest_state.has_taken_branch(quest_id, branch_id)
+
+    def add_quest_item(self, quest_id: str, item_id: str) -> None:
+        """Add an item to a quest's item set."""
+        self._quest_state.add_quest_item(quest_id, item_id)
+
+    def remove_quest_item(self, quest_id: str, item_id: str) -> None:
+        """Remove an item from a quest's item set."""
+        self._quest_state.remove_quest_item(quest_id, item_id)
+
+    def has_quest_item(self, quest_id: str, item_id: str) -> bool:
+        """Check if a quest has a specific item."""
+        return self._quest_state.has_quest_item(quest_id, item_id)
+
+    def get_quest_progress(self, quest_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed progress for a quest."""
+        quest = self._quest_state.get_quest(quest_id)
+        if not quest:
+            return None
+            
+        return {
+            'status': self._quest_state.get_quest_status(quest_id),
+            'active_stage': self._quest_state.get_active_stage(quest_id),
+            'completed_objectives': list(self._quest_state.completed_objectives.get(quest_id, set())),
+            'taken_branches': list(self._quest_state.taken_branches.get(quest_id, set())),
+            'quest_items': list(self._quest_state.quest_items.get(quest_id, set()))
+        }
+
+    def get_all_quests(self) -> Dict[str, Quest]:
+        """Get all available quests."""
+        return self._quest_state.quests.copy()  # Return a copy to prevent direct modification
+
+    def get_main_quests(self) -> List[Quest]:
+        """Get all main quests."""
+        return [quest for quest in self._quest_state.quests.values() 
+                if quest.is_main_quest]
+    
+    def get_side_quests(self) -> List[Quest]:
+        """Get all side quests."""
+        return [quest for quest in self._quest_state.quests.values() 
+                if not quest.is_main_quest]
+
+    # Rest of the GameState methods...
     def add_item(self, item: Item) -> None:
         """Add an item to the player's inventory."""
         self.inventory.append(item)
@@ -106,10 +201,6 @@ class GameState:
     def add_clue(self, clue: Clue) -> None:
         """Add a clue to the discovered clues."""
         self.discovered_clues.append(clue)
-    
-    def update_quest(self, quest_id: str, status: QuestStatus) -> None:
-        """Update a quest's status in the quest log."""
-        self.quest_log[quest_id] = status
     
     def modify_skill(self, skill_name: str, amount: int) -> bool:
         """Modify a skill by the given amount. Returns True if successful."""
@@ -132,31 +223,9 @@ class GameState:
         """Record an interaction with an NPC."""
         self.npc_interactions[npc_id] = self.npc_interactions.get(npc_id, 0) + 1
     
-    def update_quest_items(self, quest_id: str, item_id: str) -> None:
-        """Update tracking of items related to a specific quest."""
-        if quest_id not in self.quest_items:
-            self.quest_items[quest_id] = set()
-        self.quest_items[quest_id].add(item_id)
-    
     def modify_relationship(self, npc_id: str, change: int) -> None:
         """Modify relationship value with an NPC."""
         self.relationship_values[npc_id] = self.relationship_values.get(npc_id, 0) + change
-    
-    def is_quest_stage_active(self, quest_id: str, stage_id: str) -> bool:
-        """Check if a specific quest stage is active."""
-        return self.active_quest_stages.get(quest_id) == stage_id
-    
-    def is_quest_objective_completed(self, quest_id: str, objective_id: str) -> bool:
-        """Check if a specific quest objective is completed."""
-        if quest_id not in self.completed_objectives:
-            return False
-        return objective_id in self.completed_objectives[quest_id]
-    
-    def is_quest_branch_taken(self, quest_id: str, branch_id: str) -> bool:
-        """Check if a specific quest branch has been taken."""
-        if quest_id not in self.taken_quest_branches:
-            return False
-        return branch_id in self.taken_quest_branches[quest_id]
     
     def get_relationship(self, npc_id: str) -> int:
         """Get the relationship value with an NPC."""
@@ -165,18 +234,3 @@ class GameState:
     def has_visited_location(self, location_id: str) -> bool:
         """Check if a location has been visited."""
         return location_id in self.visited_locations
-    
-    def get_active_quests(self) -> List[str]:
-        """Get IDs of all active quests."""
-        return [quest_id for quest_id, status in self.quest_log.items() 
-                if status == QuestStatus.InProgress]
-    
-    def get_completed_quests(self) -> List[str]:
-        """Get IDs of all completed quests."""
-        return [quest_id for quest_id, status in self.quest_log.items() 
-                if status == QuestStatus.Completed]
-    
-    def get_failed_quests(self) -> List[str]:
-        """Get IDs of all failed quests."""
-        return [quest_id for quest_id, status in self.quest_log.items() 
-                if status == QuestStatus.Failed]

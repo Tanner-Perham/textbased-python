@@ -4,3 +4,6 @@ __pycache__/
 .vscode/
 saves/
 textbased_python.egg-info
+config/__pycache__
+quest/__pycache__
+save/__pycache__

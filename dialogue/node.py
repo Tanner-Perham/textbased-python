@@ -64,7 +64,7 @@ class DialogueOption:
     skill_check: Optional[EnhancedSkillCheck] = None
     emotional_impact: Dict[str, int] = field(default_factory=dict)
     conditions: Dict[str, Any] = field(default_factory=dict)
-    consequences: List[Dict[str, Any]] = field(default_factory=list)
+    consequences: List[DialogueEffect] = field(default_factory=list)
     inner_voice_reactions: List[InnerVoiceComment] = field(default_factory=list)
     success_node: str = ""  # Node to go to on successful skill check
     failure_node: str = ""  # Node to go to on failed skill check

@@ -3,6 +3,7 @@ Dialogue manager for handling NPC conversations.
 """
 
 import random
+import logging
 from typing import Any, Dict, List, Optional, Set
 
 from dialogue.node import (
@@ -14,8 +15,10 @@ from dialogue.node import (
     InnerVoiceComment,
 )
 from dialogue.response import DialogueResponse
-from game.game_state import GameState
+from game.game_state import GameState, QuestStatus
+from quest.quest import Quest
 
+logger = logging.getLogger(__name__)
 
 class DialogueManager:
     """Manages dialogue trees and interactions."""
@@ -29,6 +32,7 @@ class DialogueManager:
         self.emotional_states = {}
         self.relationship_values = {}
         self.dialogue_tree = {}
+        self.game_engine = None
 
     def set_dialogue_tree(self, dialogue_tree: Dict[str, DialogueNode]) -> None:
         """Set the dialogue tree."""
@@ -197,9 +201,11 @@ class DialogueManager:
 
             if isinstance(skill_check_response, DialogueResponse.SkillCheck):
                 skill_check_success = skill_check_response.success
-
+        print(f"DialogueManager: Option {option}")
+        print(f"DialogueManager: Skill check success {skill_check_success}")
         self._apply_emotional_changes(option.emotional_impact)
 
+        print(f"DialogueManager: Processing effects {option.consequences}")
         self._process_effects(option.consequences, game_state)
 
         for reaction in option.inner_voice_reactions:
@@ -275,48 +281,151 @@ class DialogueManager:
         for emotion, value in changes.items():
             self.emotional_states[self.current_node] = emotion
 
-    def _process_effects(
-        self, effects: List[Dict[str, Any]], game_state: GameState
-    ) -> None:
-        """Process dialogue effects."""
+    def _process_effects(self, effects: List[DialogueEffect], game_state: GameState) -> None:
+        """Process a list of dialogue effects."""
         for effect in effects:
-            effect_type = effect.get("effect_type")
-            data = effect.get("data")
+            effect_type = effect.effect_type
+            data = effect.data
 
-            if effect_type == "ModifyRelationship":
-                npc_id, value = data
-                game_state.modify_relationship(npc_id, value)
+            if effect_type == "quest":
+                self._handle_quest_effect(data, game_state)
+            elif effect_type == "relationship":
+                self._handle_relationship_effect(data, game_state)
+            elif effect_type == "item":
+                self._handle_item_effect(data, game_state)
+            elif effect_type == "skill":
+                self._handle_skill_effect(data, game_state)
+            elif effect_type == "stat":
+                self._handle_stat_effect(data, game_state)
+            elif effect_type == "flag":
+                self._handle_flag_effect(data, game_state)
+            elif effect_type == "notification":
+                self._handle_notification_effect(data, game_state)
+            elif effect_type == "scene":
+                self._handle_scene_effect(data, game_state)
+            elif effect_type == "combat":
+                self._handle_combat_effect(data, game_state)
+            elif effect_type == "custom":
+                self._handle_custom_effect(data, game_state)
+            else:
+                logger.warning(f"Unknown effect type: {effect_type}")
 
-            elif effect_type == "AddItem":
-                game_state.add_item(data)
+    def _handle_quest_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle quest-related effects."""
+        print(f"DialogueManager: Handling quest effect {data}")
+        if data.get("action") == "add":
+            print(f"DialogueManager: Adding quest {data['quest_id']}")
+            # Get the quest from the game config
+            quest_config = self.game_engine.config.get_quest(data["quest_id"])
+            if quest_config:
+                # Convert config quest to Quest object
+                quest = Quest(
+                    id=quest_config.id,
+                    title=quest_config.title,
+                    description=quest_config.description,
+                    short_description=quest_config.short_description,
+                    objectives=[],
+                    status=QuestStatus.NotStarted
+                )
+                # Add the quest to the game state
+                game_state.add_quest(quest)
+        elif data.get("action") == "start":
+            print(f"DialogueManager: Starting quest {data['quest_id']}")
+            # First ensure the quest exists
+            quest = game_state.get_quest(data["quest_id"])
+            if not quest:
+                # Try to get the quest from the game config
+                quest_config = self.game_engine.config.get_quest(data["quest_id"])
+                if quest_config:
+                    # Convert config quest to Quest object
+                    quest = Quest(
+                        id=quest_config.id,
+                        title=quest_config.title,
+                        description=quest_config.description,
+                        short_description=quest_config.short_description,
+                        objectives=[],
+                        status=QuestStatus.NotStarted
+                    )
+                    # Add the quest to the game state
+                    self.game_engine.quest_manager.game_state.add_quest(quest)
+            # Now update the quest status
+            self.game_engine.quest_manager.game_state.update_quest_status(data["quest_id"], QuestStatus.InProgress)
+        elif data.get("action") == "advance":
+            self.game_engine.quest_manager.game_state.set_active_stage(data["quest_id"], data["stage_id"])
+        elif data.get("action") == "complete_objective":
+            self.game_engine.quest_manager.game_state.add_completed_objective(data["quest_id"], data["objective_id"])
+        elif data.get("action") == "fail":
+            self.game_engine.quest_manager.game_state.update_quest_status(data["quest_id"], QuestStatus.Failed)
+        elif data.get("action") == "unlock_branch":
+            if data["quest_id"] not in self.game_engine.quest_manager.game_state.taken_quest_branches:
+                self.game_engine.quest_manager.game_state.taken_quest_branches[data["quest_id"]] = set()
+            game_state.taken_quest_branches[data["quest_id"]].add(data["branch_id"])
+            
+        # Update quest state after any quest-related changes
+        game_state.check_all_quest_updates()
 
-            elif effect_type == "RemoveItem":
-                game_state.remove_item(data)
+    def _handle_relationship_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle relationship-related effects."""
+        npc_id = data.get("npc_id")
+        value = data.get("value")
+        if npc_id and value is not None:
+            game_state.modify_relationship(npc_id, value)
 
-            elif effect_type == "StartQuest":
-                game_state.start_quest(data)
+    def _handle_item_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle item-related effects."""
+        if data.get("action") == "add":
+            game_state.add_item(data["item_id"])
+        elif data.get("action") == "remove":
+            game_state.remove_item(data["item_id"])
 
-            elif effect_type == "AdvanceQuest":
-                quest_id, stage_id = data
-                game_state.advance_quest(quest_id, stage_id)
+    def _handle_skill_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle skill-related effects."""
+        skill_name = data.get("skill_name")
+        amount = data.get("amount")
+        if skill_name and amount is not None:
+            game_state.modify_skill(skill_name, amount)
 
-            elif effect_type == "CompleteQuestObjective":
-                quest_id, objective_id = data
-                game_state.complete_objective(quest_id, objective_id)
+    def _handle_stat_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle stat-related effects."""
+        stat_name = data.get("stat_name")
+        amount = data.get("amount")
+        if stat_name and amount is not None:
+            game_state.modify_stat(stat_name, amount)
 
-            elif effect_type == "FailQuest":
-                game_state.fail_quest(data)
+    def _handle_flag_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle flag-related effects."""
+        flag_name = data.get("flag_name")
+        value = data.get("value")
+        if flag_name and value is not None:
+            game_state.set_flag(flag_name, value)
 
-            elif effect_type == "UnlockQuestBranch":
-                quest_id, branch_id = data
-                game_state.unlock_quest_branch(quest_id, branch_id)
+    def _handle_notification_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle notification-related effects."""
+        if self.game_engine and hasattr(self.game_engine, 'notification_manager'):
+            self.game_engine.notification_manager.add_notification(
+                data.get("text", ""),
+                data.get("type", "info")
+            )
 
-            elif effect_type == "ModifySkill":
-                skill_name, amount = data
-                game_state.modify_skill(skill_name, amount)
+    def _handle_scene_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle scene-related effects."""
+        if data.get("action") == "change_location":
+            game_state.change_location(data["location_id"])
+        elif data.get("action") == "change_scene":
+            game_state.change_scene(data["scene_id"])
 
-            elif effect_type == "ChangeLocation":
-                game_state.change_location(data)
+    def _handle_combat_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle combat-related effects."""
+        if self.game_engine and hasattr(self.game_engine, 'combat_manager'):
+            if data.get("action") == "start":
+                self.game_engine.combat_manager.start_combat(data["enemy_id"])
+            elif data.get("action") == "end":
+                self.game_engine.combat_manager.end_combat()
+
+    def _handle_custom_effect(self, data: Any, game_state: GameState) -> None:
+        """Handle custom-related effects."""
+        if self.game_engine and hasattr(self.game_engine, 'handle_custom_effect'):
+            self.game_engine.handle_custom_effect(data)
 
 
 def create_dialogue_node(

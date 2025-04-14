@@ -4,9 +4,10 @@ This module is responsible for loading and parsing game configuration from YAML 
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
+from game.quest_status import QuestStatus
 
 
 @dataclass
@@ -78,12 +79,17 @@ class QuestStage:
     """Stage within a quest."""
 
     id: str
+    title: str
     description: str
     notification_text: str = ""
     status: str = "NotStarted"
     objectives: List[Dict[str, Any]] = field(default_factory=list)
     completion_events: List[Dict[str, Any]] = field(default_factory=list)
     next_stages: List[Dict[str, Any]] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Convert status string to QuestStatus enum."""
+        self.status = QuestStatus[self.status]
 
 
 @dataclass
@@ -111,8 +117,13 @@ class Quest:
     rewards: QuestRewards = field(default_factory=QuestRewards)
     is_hidden: bool = False
     is_main_quest: bool = False
+    status: str = "NotStarted"
     related_npcs: List[str] = field(default_factory=list)
     related_locations: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Convert status string to QuestStatus enum."""
+        self.status = QuestStatus[self.status]
 
 
 @dataclass
@@ -172,6 +183,9 @@ class GameConfig:
             # Handle rewards separately
             rewards_data = quest_data.pop("rewards", {})
             rewards = QuestRewards(**rewards_data)
+
+            # Remove id from quest_data to avoid duplicate
+            quest_data.pop("id", None)
 
             # Create quest with processed stages and rewards
             quest = Quest(id=quest_id, **quest_data, stages=stages, rewards=rewards)

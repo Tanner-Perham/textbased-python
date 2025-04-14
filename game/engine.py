@@ -28,14 +28,23 @@ class GameEngine:
         self.game_state = GameState()
         self.game_state.current_location = self.current_location
 
-        # Initialize quest manager with quests from config
-        self.quest_manager = QuestManager(config.quests)
+        # Initialize quest manager with game state
+        self.quest_manager = QuestManager(self.game_state)
+
+        # Add quests from config to game state
+        for quest in config.quests.values():
+            self.game_state.add_quest(quest)
+
+        # Start the main quest automatically
+        main_quests = [quest for quest in config.quests.values() if quest.is_main_quest]
+        if main_quests:
+            self.start_quest(main_quests[0].id)
 
         # Initialize save manager
         self.save_manager = SaveManager()
 
         # Dialogue system (will be set externally)
-        self.dialogue_handler: Optional[DialogueManager] = None  # Update type hint
+        self.dialogue_handler: Optional[DialogueManager] = None
 
         # Notification system
         self.pending_notifications = []
@@ -62,42 +71,47 @@ class GameEngine:
 
         # Add quit command handling at the start
         if parts[0] in ["quit"]:
-            # Return a special response that the UI can check for
             return "__quit__"
 
+        # Check for quest updates and get notifications
+        self._check_quest_updates()
+        notifications = self._get_notifications()
+        
         # Process commands
         if parts[0] == "look" and len(parts) > 1 and parts[1] == "around":
-            return self._handle_look_around()
+            response = self._handle_look_around()
+            return self._format_response(response, notifications)
 
         elif parts[0] == "examine" and len(parts) > 1:
             item = parts[1]
-            return f"You examine the {item} closely."
+            response = f"You examine the {item} closely."
+            return self._format_response(response, notifications)
 
         elif parts[0] in ["talk", "speak"] and len(parts) > 1:
             npc_parts = parts[1:]
-
-            # Remove common connecting words
             connecting_words = ["to", "with", "the", "about"]
             npc_name = " ".join(word for word in npc_parts if word.lower() not in connecting_words)
             if not npc_name:
                 return "Who would you like to talk to?"
             
-            return self._handle_talk_to_npc(npc_name)
+            response = self._handle_talk_to_npc(npc_name)
+            return self._format_response(response, notifications)
 
         elif parts[0] in ["go", "walk", "move", "head"]:
-            # Extract direction from the remaining parts of the command
-            direction_parts = parts[1:]  # Get all words after the movement verb
-            
-            # Remove common connecting words
+            direction_parts = parts[1:]
             connecting_words = ["to", "the", "towards", "into", "inside"]
             direction = " ".join(word for word in direction_parts if word.lower() not in connecting_words)
             
-            if not direction:  # If no direction remains after filtering
+            if not direction:
                 return "Where would you like to go?"
                 
-            return self._handle_movement(direction)
+            response = self._handle_movement(direction)
+            return self._format_response(response, notifications)
+
         elif parts[0] == "back":
-            return self._handle_movement("back")
+            response = self._handle_movement("back")
+            return self._format_response(response, notifications)
+
         elif parts[0] in ["exits", "directions", "connections"] or (
             len(parts) >= 3
             and parts[0] == "where"
@@ -105,56 +119,81 @@ class GameEngine:
             and parts[2] == "i"
             and parts[3] == "go"
         ):
-            return self._handle_show_exits()
+            response = self._handle_show_exits()
+            return self._format_response(response, notifications)
 
         elif parts[0] == "save":
             save_name = " ".join(parts[1:]) if len(parts) > 1 else ""
-            return self._handle_save_command(save_name)
+            response = self._handle_save_command(save_name)
+            return self._format_response(response, notifications)
 
         elif parts[0] == "quicksave" or (
             len(parts) == 2 and parts[0] == "quick" and parts[1] == "save"
         ):
-            return self._handle_quick_save_command()
+            response = self._handle_quick_save_command()
+            return self._format_response(response, notifications)
 
         elif parts[0] == "load" and len(parts) > 1:
             load_identifier = " ".join(parts[1:])
-            return self._handle_load_command(load_identifier)
+            response = self._handle_load_command(load_identifier)
+            return self._format_response(response, notifications)
 
         elif parts[0] == "quickload" or (
             len(parts) == 2 and parts[0] == "quick" and parts[1] == "load"
         ):
-            return self._handle_quick_load_command()
+            response = self._handle_quick_load_command()
+            return self._format_response(response, notifications)
 
         elif parts[0] == "saves" or (
             len(parts) == 2 and parts[0] == "list" and parts[1] == "saves"
         ):
-            return self._handle_list_saves_command()
+            response = self._handle_list_saves_command()
+            return self._format_response(response, notifications)
 
         elif parts[0] in ["quests", "journal"] or (
             len(parts) == 2 and parts[0] == "quest" and parts[1] == "log"
         ):
-            return self._handle_show_quests()
+            response = self._handle_show_quests()
+            return self._format_response(response, notifications)
 
         elif len(parts) == 3 and parts[0] == "quest" and parts[1] == "track":
             quest_id = parts[2]
-            return self._handle_track_quest(quest_id)
+            response = self._handle_track_quest(quest_id)
+            return self._format_response(response, notifications)
 
         elif len(parts) == 3 and parts[0] == "quest" and parts[1] == "info":
             quest_id = parts[2]
-            return self._handle_quest_info(quest_id)
+            response = self._handle_quest_info(quest_id)
+            return self._format_response(response, notifications)
 
         elif len(parts) == 2 and parts[0] == "active" and parts[1] == "quests":
-            return self._handle_show_active_quests()
+            response = self._handle_show_active_quests()
+            return self._format_response(response, notifications)
 
         elif parts[0] == "help":
-            return self._help_command()
+            response = self._help_command()
+            return self._format_response(response, notifications)
 
         else:
-            return "Unknown command. Type 'help' for a list of commands."
+            response = "Unknown command. Type 'help' for a list of commands."
+            return self._format_response(response, notifications)
 
-    def check_quest_updates(self) -> None:
-        """Check for quest updates."""
-        self.quest_manager.check_all_quest_updates(self.game_state)
+    def _format_response(self, response: str, notifications: List[str]) -> str:
+        """Format the response with any pending notifications."""
+        if notifications:
+            notification_text = "\n".join(notifications)
+            return f"{notification_text}\n\n{response}"
+        return response
+
+    def _get_notifications(self) -> List[str]:
+        """Get and clear any pending notifications."""
+        notifications = self.quest_manager.get_active_notifications()
+        self.quest_manager.clear_old_notifications(0)  # Clear all notifications
+        return [notification.message for notification in notifications]
+
+    def _check_quest_updates(self) -> None:
+        """Check for quest updates and process them."""
+        self.quest_manager.check_all_quest_updates()
 
         # Check for new notifications
         notifications = self.quest_manager.get_active_notifications()
@@ -172,7 +211,7 @@ class GameEngine:
 
     def start_quest(self, quest_id: str) -> bool:
         """Start a quest by ID."""
-        return self.quest_manager.start_quest(quest_id, self.game_state)
+        return self.quest_manager.start_quest(quest_id)
 
     def fail_quest(self, quest_id: str) -> None:
         """Fail a quest by ID."""
@@ -398,73 +437,122 @@ class GameEngine:
             return f"Failed to list saves: {e}"
 
     def _handle_show_quests(self) -> str:
-        """Handle the 'quests' command."""
-        # Check for quest updates before showing
-        self.check_quest_updates()
+        """Handle the quest log command."""
+        all_quests = self.quest_manager.game_state.get_all_quests()
+        active_quests = self.quest_manager.game_state.get_active_quests()
+        completed_quests = self.quest_manager.game_state.get_completed_quests()
+        failed_quests = self.quest_manager.game_state.get_failed_quests()
 
-        # This would be replaced with actual quest UI
-        return "Opened quest log. (UI not implemented yet)"
+        response = "Quest Log:\n\n"
+
+        if all_quests:
+            response += "All Quests:\n"
+            for quest in all_quests:
+                response += f"- {quest.title}\n"
+            response += "\n"
+
+        if active_quests:
+            response += "Active Quests:\n"
+            for quest in active_quests:
+                response += f"- {quest.title}\n"
+                current_stage = next((stage for stage in quest.stages 
+                                    if stage.status == "InProgress"), None)
+                if current_stage:
+                    response += f"  Current Stage: {current_stage.title}\n"
+                    response += f"  {current_stage.description}\n"
+                    for obj in current_stage.objectives:
+                        status = "✓" if self.quest_manager.is_objective_completed(quest.id, obj.id) else "○"
+                        optional = "(Optional) " if obj.get("is_optional", False) else ""
+                        response += f"  {status} {optional}{obj.get('description', '')}\n"
+                response += "\n"
+
+        if completed_quests:
+            response += "Completed Quests:\n"
+            for quest in completed_quests:
+                response += f"- {quest.title}\n"
+            response += "\n"
+
+        if failed_quests:
+            response += "Failed Quests:\n"
+            for quest in failed_quests:
+                response += f"- {quest.title}\n"
+            response += "\n"
+
+        if not active_quests and not completed_quests and not failed_quests:
+            response += "No quests available.\n"
+
+        return response
 
     def _handle_track_quest(self, quest_id: str) -> str:
-        """Handle the 'quest track' command."""
+        """Handle tracking a specific quest."""
         quest = self.quest_manager.get_quest(quest_id)
         if not quest:
-            return f"No quest found with ID: {quest_id}"
+            return f"Quest '{quest_id}' not found."
 
-        # Actual tracking would be implemented in the UI
-        return f"Now tracking: {quest.title}"
+        if quest_id not in self.game_state.quest_log:
+            return f"Quest '{quest.title}' is not active."
+
+        current_stage = next((stage for stage in quest.stages 
+                            if stage.status == "InProgress"), None)
+        if not current_stage:
+            return f"Quest '{quest.title}' has no active stage."
+
+        response = f"Tracking Quest: {quest.title}\n"
+        response += f"Current Stage: {current_stage.title}\n"
+        response += f"{current_stage.description}\n\n"
+        response += "Objectives:\n"
+        for obj in current_stage.objectives:
+            status = "✓" if obj.get("is_completed", False) else "○"
+            optional = "(Optional) " if obj.get("is_optional", False) else ""
+            response += f"{status} {optional}{obj.get('description', '')}\n"
+
+        return response
 
     def _handle_quest_info(self, quest_id: str) -> str:
-        """Handle the 'quest info' command."""
+        """Handle showing detailed information about a quest."""
         quest = self.quest_manager.get_quest(quest_id)
         if not quest:
-            return f"No quest found with ID: {quest_id}"
+            return f"Quest '{quest_id}' not found."
 
-        # Find current stage
-        current_stage = None
-        for stage in quest.stages:
-            if stage.status == "InProgress":
-                current_stage = stage
-                break
+        response = f"Quest: {quest.title}\n"
+        response += f"Type: {'Main Quest' if quest.is_main_quest else 'Side Quest'}\n"
+        response += f"Status: {self.game_state.quest_log.get(quest_id, QuestStatus.NotStarted).name}\n\n"
+        response += f"Description:\n{quest.description}\n\n"
 
-        current_stage_desc = (
-            current_stage.description if current_stage else "No active stage"
-        )
+        if quest.stages:
+            response += "Stages:\n"
+            for stage in quest.stages:
+                response += f"- {stage.title}\n"
+                response += f"  {stage.description}\n"
+                if stage.objectives:
+                    response += "  Objectives:\n"
+                    for obj in stage.objectives:
+                        status = "✓" if obj.get("is_completed", False) else "○"
+                        optional = "(Optional) " if obj.get("is_optional", False) else ""
+                        response += f"  {status} {optional}{obj.get('description', '')}\n"
+                response += "\n"
 
-        # Calculate progress percentage
-        completed_stages = sum(
-            1 for stage in quest.stages if stage.status == "Completed"
-        )
-        total_stages = len(quest.stages)
-        progress = (completed_stages / total_stages) * 100 if total_stages > 0 else 0
-
-        return (
-            f"Quest: {quest.title}\n\n"
-            f"{quest.description}\n\n"
-            f"Current Objective: {current_stage_desc}\n"
-            f"Progress: {progress:.1f}%"
-        )
+        return response
 
     def _handle_show_active_quests(self) -> str:
-        """Handle the 'active quests' command."""
+        """Handle showing only active quests."""
         active_quests = self.quest_manager.get_active_quests()
-
         if not active_quests:
-            return "You don't have any active quests."
+            return "No active quests."
 
-        response = "Active Quests:\n"
-
+        response = "Active Quests:\n\n"
         for quest in active_quests:
-            # Calculate progress percentage
-            completed_stages = sum(
-                1 for stage in quest.stages if stage.status == "Completed"
-            )
-            total_stages = len(quest.stages)
-            progress = (
-                (completed_stages / total_stages) * 100 if total_stages > 0 else 0
-            )
-
-            response += f"- {quest.title} ({progress:.1f}% complete)\n"
+            response += f"- {quest.title}\n"
+            current_stage = next((stage for stage in quest.stages 
+                                if stage.status == "InProgress"), None)
+            if current_stage:
+                response += f"  Current Stage: {current_stage.title}\n"
+                response += f"  {current_stage.description}\n"
+                for obj in current_stage.objectives:
+                    status = "✓" if obj.get("is_completed", False) else "○"
+                    optional = "(Optional) " if obj.get("is_optional", False) else ""
+                    response += f"  {status} {optional}{obj.get('description', '')}\n"
+            response += "\n"
 
         return response
 
