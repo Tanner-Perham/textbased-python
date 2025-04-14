@@ -11,6 +11,8 @@ from dialogue.node import (
 
 def convert_dialogue_trees(config):
     """Convert config dialogue trees to internal format."""
+
+
     # If the dialogue trees are already in the internal format, return them as-is
     if all(isinstance(node, DialogueNode) for node in config.dialogue_trees.values()):
         return config.dialogue_trees
@@ -85,7 +87,7 @@ def convert_dialogue_trees(config):
                     if isinstance(cons, dict):
                         consequences.append(
                             DialogueEffect(
-                                effect_type=cons.get("event_type", ""),
+                                effect_type=cons.get("effect_type", ""),
                                 data=cons.get("data"),
                             )
                         )
@@ -122,5 +124,4 @@ def convert_dialogue_trees(config):
         )
 
         internal_trees[node_id] = internal_node
-
     return internal_trees 

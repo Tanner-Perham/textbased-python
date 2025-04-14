@@ -67,6 +67,12 @@ class QuestState:
         """Mark an objective as completed."""
         if quest_id not in self.quests:
             return False
+        objectives = []
+        for stage in self.quests[quest_id].stages:
+            for objective in stage.objectives:
+                objectives.append(objective['id'])
+        if objective_id not in objectives:
+            return False
         self.completed_objectives[quest_id].add(objective_id)
         return True
 

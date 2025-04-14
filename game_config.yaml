@@ -306,7 +306,7 @@ dialogue_trees:
         consequences:
           - effect_type: "quest"
             data:
-              action: "add"
+              action: "start"
               quest_id: "chen_shift_help"
           - effect_type: "quest"
             data:

@@ -45,21 +45,10 @@ class QuestManager:
         # First ensure the quest exists in the state
         quest = self.game_state.get_quest(quest_id)
         if not quest:
-            # Try to get the quest from the game config
-            quest_config = self.game_state.config.get_quest(quest_id)
-            if quest_config:
-                # Convert config quest to Quest object and add it
-                quest = Quest(
-                    id=quest_config.id,
-                    title=quest_config.title,
-                    description=quest_config.description,
-                    short_description=quest_config.short_description,
-                    objectives=[],
-                    status=QuestStatus.NotStarted
-                )
-                self.game_state.add_quest(quest)
-            else:
-                return False
+            raise Exception(f"Quest {quest_id} not found")
+        
+        if quest.status != QuestStatus.NotStarted:
+            raise Exception(f"Quest {quest_id} is already started")
         
         # Now update the quest status
         if self.game_state.start_quest(quest_id):

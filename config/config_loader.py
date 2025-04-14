@@ -139,6 +139,10 @@ class GameConfig:
     inner_voices: List[Dict[str, Any]] = field(default_factory=list)
     thoughts: Dict[str, Any] = field(default_factory=dict)
 
+    def get_quest(self, quest_id: str) -> Optional[Quest]:
+        """Get a quest by its ID."""
+        return self.quests.get(quest_id)
+
     @classmethod
     def load(cls, path: str) -> "GameConfig":
         """Load game configuration from YAML file."""

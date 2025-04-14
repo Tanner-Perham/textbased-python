@@ -135,7 +135,7 @@ class GameState:
 
     def add_completed_objective(self, quest_id: str, objective_id: str) -> None:
         """Mark an objective as completed."""
-        self._quest_state.add_completed_objective(quest_id, objective_id)
+        return self._quest_state.add_completed_objective(quest_id, objective_id)
 
     def is_objective_completed(self, quest_id: str, objective_id: str) -> bool:
         """Check if an objective is completed."""
@@ -143,7 +143,7 @@ class GameState:
 
     def add_quest_branch(self, quest_id: str, branch_id: str) -> None:
         """Add a quest branch to the taken branches."""
-        self._quest_state.add_quest_branch(quest_id, branch_id)
+        return self._quest_state.add_quest_branch(quest_id, branch_id)
 
     def has_taken_branch(self, quest_id: str, branch_id: str) -> bool:
         """Check if a quest branch has been taken."""
@@ -151,11 +151,11 @@ class GameState:
 
     def add_quest_item(self, quest_id: str, item_id: str) -> None:
         """Add an item to a quest's item set."""
-        self._quest_state.add_quest_item(quest_id, item_id)
+        return self._quest_state.add_quest_item(quest_id, item_id)
 
     def remove_quest_item(self, quest_id: str, item_id: str) -> None:
         """Remove an item from a quest's item set."""
-        self._quest_state.remove_quest_item(quest_id, item_id)
+        return self._quest_state.remove_quest_item(quest_id, item_id)
 
     def has_quest_item(self, quest_id: str, item_id: str) -> bool:
         """Check if a quest has a specific item."""
