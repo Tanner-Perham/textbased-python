@@ -6,11 +6,11 @@ from collections import defaultdict
 
 class ItemCategory(Enum):
     """Categories of items in the game."""
-    WEARABLE = auto()
-    CONSUMABLE = auto()
-    QUEST_ITEM = auto()
-    TOOL = auto()
-    EVIDENCE = auto()
+    WEARABLE = "Wearable"
+    CONSUMABLE = "Consumable" 
+    QUEST_ITEM = "Quest Item"
+    TOOL = "Tool"
+    EVIDENCE = "Evidence"
 
 
 class WearableSlot(Enum):

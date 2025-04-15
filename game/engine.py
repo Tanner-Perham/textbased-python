@@ -170,7 +170,7 @@ class GameEngine:
             response = self._handle_show_inventory()
             return self._format_response(response, notifications)
 
-        elif parts[0] == "equip" and len(parts) > 1:
+        elif parts[0] in ["equip", "wear", "put on", "don"] and len(parts) > 1:
             item_name = " ".join(parts[1:])
             response = self._handle_equip_item(item_name)
             return self._format_response(response, notifications)
@@ -786,6 +786,17 @@ class GameEngine:
             for slot, item in equipped.items():
                 if item:
                     response += f"- {slot.name}: {item.name}\n"
+                    response += f"  Description: {item.description}\n"
+                    response += f"  Type: {next(iter(item.categories)).value}\n"
+                    response += f"  Weight: {item.weight}\n"
+                    if hasattr(item, 'effects') and item.effects:
+                        response += "  Effects:\n"
+                        for effect in item.effects:
+                            response += f"    • {effect.attribute.title()}: {effect.value:+g}"
+                            if effect.description:
+                                response += f" ({effect.description})"
+                            response += "\n"
+                    response += "\n"
         
         # Show carried items
         carried = inventory.items
@@ -795,6 +806,16 @@ class GameEngine:
                 response += f"- {item.name}"
                 if item.quantity > 1:
                     response += f" (x{item.quantity})"
+                response += f"\n  Description: {item.description}\n"
+                response += f"  Type: {next(iter(item.categories)).value}\n"
+                response += f"  Weight: {item.weight}\n"
+                if hasattr(item, 'effects') and item.effects:
+                    response += "  Effects:\n"
+                    for effect in item.effects:
+                        response += f"    • {effect.attribute.title()}: {effect.value:+g}"
+                        if effect.description:
+                            response += f" ({effect.description})"
+                        response += "\n"
                 response += "\n"
         
         # Show containers
@@ -802,9 +823,20 @@ class GameEngine:
         if containers:
             response += "\nContainers:\n"
             for container in containers:
-                response += f"- {container.name}"
+                response += f"- {container.name}\n"
+                response += f"  Description: {container.description}\n"
+                response += f"  Type: {next(iter(container.categories)).value}\n"
+                response += f"  Weight: {container.weight}\n"
+                response += f"  Capacity: {container.capacity}\n"
                 if container.contents:
-                    response += f" ({sum(item.weight * item.quantity for item in container.contents)}/{container.capacity} weight)"
+                    current_weight = sum(item.weight * item.quantity for item in container.contents)
+                    response += f"  Current Weight: {current_weight}/{container.capacity}\n"
+                    response += "  Contents:\n"
+                    for item in container.contents:
+                        response += f"    • {item.name}"
+                        if item.quantity > 1:
+                            response += f" (x{item.quantity})"
+                        response += "\n"
                 response += "\n"
         
         if not any(equipped.values()) and not carried and not containers:
