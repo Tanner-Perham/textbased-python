@@ -6,9 +6,10 @@ import random
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from config.config_loader import GameConfig
+from config.config_loader import GameConfig, ConfigLoader
 from dialogue.manager import DialogueManager
 from game.game_state import GameState, QuestStatus
+from game.inventory import Container, Item, ItemCategory, Wearable, WearableSlot
 from quest.quest_manager import QuestManager
 from save.save_load import SaveManager
 from ui.dialogue_ui import DialogueMode
@@ -53,6 +54,14 @@ class GameEngine:
 
         # Start time for playtime tracking
         self.start_time = time.time()
+
+        # Add starting items to inventory
+        for item_data in config.game_settings.starting_inventory:
+            try:
+                item = ConfigLoader.create_item(item_data['id'], item_data)
+                self.game_state.inventory_manager.add_item(item)
+            except Exception as e:
+                print(f"Error adding starting item {item_data.get('id', 'unknown')}: {str(e)}")
 
     def current_location_info(self) -> str:
         """Return the current location name."""
@@ -771,15 +780,15 @@ class GameEngine:
         response = "Inventory:\n"
         
         # Show equipped items
-        equipped = inventory.get_equipped_items()
-        if equipped:
+        equipped = inventory.equipped_items
+        if any(equipped.values()):
             response += "\nEquipped Items:\n"
             for slot, item in equipped.items():
                 if item:
                     response += f"- {slot.name}: {item.name}\n"
         
         # Show carried items
-        carried = inventory.get_items_by_category(ItemCategory.ITEM)
+        carried = inventory.items
         if carried:
             response += "\nCarried Items:\n"
             for item in carried:
@@ -789,16 +798,16 @@ class GameEngine:
                 response += "\n"
         
         # Show containers
-        containers = inventory.get_items_by_category(ItemCategory.CONTAINER)
+        containers = inventory.containers
         if containers:
             response += "\nContainers:\n"
             for container in containers:
                 response += f"- {container.name}"
-                if container.current_weight > 0:
-                    response += f" ({container.current_weight}/{container.capacity} weight)"
+                if container.contents:
+                    response += f" ({sum(item.weight * item.quantity for item in container.contents)}/{container.capacity} weight)"
                 response += "\n"
         
-        if not equipped and not carried and not containers:
+        if not any(equipped.values()) and not carried and not containers:
             response += "Your inventory is empty."
         
         return response
@@ -945,9 +954,8 @@ class GameEngine:
         """Find an item in the inventory by name."""
         inventory = self.game_state.inventory_manager
         all_items = (
-            list(inventory.get_equipped_items().values()) +
-            inventory.get_items_by_category(ItemCategory.ITEM) +
-            inventory.get_items_by_category(ItemCategory.CONTAINER)
+            list(inventory.equipped_items.values()) +
+            inventory.get_items_by_category(ItemCategory.WEARABLE)
         )
         
         # First try exact match

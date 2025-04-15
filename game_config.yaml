@@ -5,6 +5,110 @@ game_settings:
   title: "The Warehouse Mystery"
   starting_location: "warehouse_entrance"
   default_time: "Morning"
+  starting_inventory:
+    - id: "police_badge"
+      name: "Police Badge"
+      description: "Your official police badge. It's seen better days but still commands respect."
+      categories: ["WEARABLE"]
+      slot: "ACCESSORY"
+      weight: 0.1
+      style_rating: 5
+      effects:
+        - attribute: "authority"
+          value: 2
+          description: "A symbol of your position and authority."
+    - id: "notebook"
+      name: "Detective's Notebook"
+      description: "A well-worn notebook filled with case notes and observations."
+      categories: ["TOOL"]
+      weight: 0.3
+      effects:
+        - attribute: "logic"
+          value: 1
+          description: "Helps organize your thoughts and observations."
+    - id: "pen"
+      name: "Reliable Pen"
+      description: "A sturdy pen that's never run out of ink when you needed it most."
+      categories: ["TOOL"]
+      weight: 0.05
+      effects:
+        - attribute: "perception"
+          value: 1
+          description: "Helps you focus on details when taking notes."
+    - id: "flashlight"
+      name: "Police Flashlight"
+      description: "A heavy-duty flashlight with a strong beam. Perfect for dark corners and night work."
+      categories: ["TOOL"]
+      weight: 0.5
+      effects:
+        - attribute: "perception"
+          value: 2
+          description: "Illuminates dark areas and helps spot details."
+    - id: "evidence_bag"
+      name: "Evidence Collection Kit"
+      description: "A professional kit for collecting and organizing evidence."
+      categories: ["CONTAINER"]
+      weight: 1.0
+      capacity: 5.0
+      allowed_categories: ["EVIDENCE"]
+    - id: "coffee"
+      name: "Thermos of Coffee"
+      description: "Hot, black coffee. Helps keep you alert."
+      categories: ["CONSUMABLE"]
+      weight: 0.5
+      stackable: true
+      quantity: 3
+      effects:
+        - attribute: "perception"
+          value: 1
+          duration: 30
+          description: "The caffeine helps you stay alert."
+        - attribute: "composure"
+          value: -1
+          duration: 30
+          description: "Makes you a bit jittery."
+    - id: "casual_pants"
+      name: "Comfortable Jeans"
+      description: "Well-worn jeans that allow for easy movement."
+      categories: ["WEARABLE"]
+      slot: "LEGS"
+      weight: 0.8
+      style_rating: 4
+      effects:
+        - attribute: "agility"
+          value: 1
+          description: "Flexible material allows for better movement."
+      set_id: "casual_wear"
+    - id: "sneakers"
+      name: "Quiet Sneakers"
+      description: "Rubber-soled shoes perfect for moving silently."
+      categories: ["WEARABLE"]
+      slot: "FEET"
+      weight: 0.7
+      style_rating: 3
+      effects:
+        - attribute: "stealth"
+          value: 2
+          description: "Soft soles make little noise."
+        - attribute: "authority"
+          value: -1
+          description: "Too casual for formal situations."
+      set_id: "casual_wear"
+    - id: "worn_jacket"
+      name: "Worn Leather Jacket"
+      description: "A comfortable jacket that's seen better days. It helps you blend in with the crowd."
+      categories: ["WEARABLE"]
+      slot: "TORSO"
+      weight: 1.5
+      style_rating: 5
+      effects:
+        - attribute: "empathy"
+          value: 1
+          description: "The casual appearance puts people at ease."
+        - attribute: "authority"
+          value: -1
+          description: "Less intimidating than professional attire."
+      set_id: "casual_wear"
 
 # Item Sets (for matching set bonuses)
 item_sets:
@@ -188,15 +292,6 @@ items:
         description: "Slightly reduces peripheral vision."
 
   # Containers
-  evidence_bag:
-    id: "evidence_bag"
-    name: "Evidence Collection Kit"
-    description: "A professional kit for collecting and organizing evidence."
-    categories: ["CONTAINER"]
-    weight: 1.0
-    capacity: 5.0
-    allowed_categories: ["EVIDENCE"]
-
   toolbox:
     id: "toolbox"
     name: "Detective's Toolbox"

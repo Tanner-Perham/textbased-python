@@ -21,6 +21,7 @@ class GameSettings:
     title: str
     starting_location: str
     default_time: str
+    starting_inventory: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

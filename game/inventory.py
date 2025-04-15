@@ -306,7 +306,11 @@ class InventoryManager:
 
     def get_items_by_category(self, category: ItemCategory) -> List[Item]:
         """Get all items of a specific category."""
-        return [item for item in self.items if category in item.categories]
+        items = [item for item in self.items if category in item.categories]
+        if items:
+            return items
+        else:
+            return []
 
     def get_container_contents(self, container_id: str) -> List[Item]:
         """Get the contents of a specific container."""
