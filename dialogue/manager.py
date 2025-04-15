@@ -126,8 +126,8 @@ class DialogueManager:
             skill_name = comment.voice_type.lower()
             player_skill = 0
 
-            if hasattr(game_state.skills, skill_name):
-                player_skill = getattr(game_state.skills, skill_name)
+            if hasattr(game_state.player.skills, skill_name):
+                player_skill = getattr(game_state.player.skills, skill_name)
 
             return player_skill >= comment.skill_requirement
 
@@ -255,13 +255,13 @@ class DialogueManager:
             difficulty += check.emotional_modifiers[current_emotion]
 
         player_skill = 0
-        if hasattr(game_state.skills, check.primary_skill):
-            player_skill = getattr(game_state.skills, check.primary_skill)
+        if check.primary_skill in game_state.player.skills:
+            player_skill = game_state.player.skills[check.primary_skill]
 
         for skill_name, factor in check.supporting_skills:
-            if hasattr(game_state.skills, skill_name):
+            if skill_name in game_state.player.skills:
                 supporting_value = int(
-                    getattr(game_state.skills, skill_name) * factor
+                    game_state.player.skills[skill_name] * factor
                 )
                 player_skill += supporting_value
 

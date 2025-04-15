@@ -13,27 +13,29 @@ class GameOutput(Log):
     
     DEFAULT_CSS = """
     GameOutput {
-        height: 1fr;
+        height: 100%;
         border: solid white;
         padding: 1 2;
         background: $boost;
         color: $text;
-        min-height: 50vh;
-        margin: 1;
-        text-wrap: wrap;  /* Enable text wrapping */
-        overflow-y: scroll;  /* Enable vertical scrolling */
-        overflow-x: hidden; /* Hide horizontal scrollbar */
+        text-wrap: wrap;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        width: 100%;
+        content-align: left top;
     }
     """
 
     def write(self, text: str) -> None:
         """Write text to the log with proper wrapping."""
-        # Remove any existing line breaks to allow proper wrapping
-        # text = text.replace("\n\n", "[br][br]")  # Preserve paragraph breaks
-        # text = text.replace("[br]", "\n")  # Restore paragraph breaks
-        
-        # Add the text to the log
-        super().write(text)
+        # Split text into paragraphs and process each one
+        paragraphs = text.split('\n\n')
+        for i, paragraph in enumerate(paragraphs):
+            # Add the paragraph to the log
+            super().write(paragraph)
+            # Add a newline between paragraphs (except after the last one)
+            if i < len(paragraphs) - 1:
+                super().write('\n\n')
 
     def on_mount(self) -> None:
         """Called when widget is added to the app."""
@@ -74,29 +76,36 @@ class GameUI(App):
 
     CSS = """
     Screen {
-        layout: grid;
-        grid-size: 1;
-        padding: 1;
-    }
-
-    GameOutput {
+        layout: vertical;
+        height: 100%;
         width: 100%;
     }
 
+    Header {
+        height: 3;
+    }
+
     LocationBar {
+        height: 3;
+        width: 100%;
+    }
+
+    #game-output {
+        height: 1fr;
         width: 100%;
     }
 
     #input-container {
         height: 3;
-        dock: bottom;
         width: 100%;
     }
 
     Input {
-        dock: bottom;
         width: 100%;
-        content-align: left middle;
+    }
+
+    Footer {
+        height: 1;
     }
     """
 

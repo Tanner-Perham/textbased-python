@@ -97,14 +97,15 @@ class GameOverlay(ModalScreen):
                 # Inventory Tab
                 with TabPane("Inventory", id="inventory"):
                     with Grid(classes="inventory-grid"):
-                        for item in self.app.game_engine.game_state.inventory:
+                        # Get all items from the inventory manager's items list
+                        for item in self.app.game_engine.game_state.inventory_manager.items:
                             yield Static(f"{item.name} - {item.description}", 
                                        classes="inventory-slot")
 
                 # Skills Tab
                 with TabPane("Skills", id="skills"):
                     with Grid(classes="skill-grid") as grid:
-                        skills = self.app.game_engine.game_state.skills
+                        skills = self.app.game_engine.game_state.player.skills
                         for skill_name, level in skills.items():
                             with Static(classes="skill-entry"):
                                 yield Static(f"{skill_name.title()}")
@@ -250,7 +251,7 @@ class GameOverlay(ModalScreen):
     def _create_skills_grid(self, grid: Grid) -> List[Static]:
         """Create and return skill entries for the grid."""
         skill_widgets = []
-        skills = self.app.game_engine.game_state.skills
+        skills = self.app.game_engine.game_state.player.skills
 
         for skill_name, level in skills.items():
             # Create the container and mount it to the grid first
@@ -275,7 +276,7 @@ class GameOverlay(ModalScreen):
         old_grid = skills_pane.query_one(".skill-grid")
         
         with Grid(classes="skill-grid") as new_grid:
-            skills = self.app.game_engine.game_state.skills
+            skills = self.app.game_engine.game_state.player.skills
             for skill_name, level in skills.items():
                 with Static(classes="skill-entry"):
                     new_grid.mount(Static(f"{skill_name.title()}"))

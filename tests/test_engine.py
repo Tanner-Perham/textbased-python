@@ -52,11 +52,57 @@ def setup_engine():
         )
     }
 
-    # Other mock config settings remain the same
+    # Add starting inventory
     mock_config.game_settings = MagicMock(spec=GameSettings)
     mock_config.game_settings.title = "Test Game"
     mock_config.game_settings.default_time = "day"
     mock_config.game_settings.starting_location = "warehouse_entrance"
+    mock_config.game_settings.starting_inventory = [
+        {
+            "id": "police_badge",
+            "name": "Police Badge",
+            "description": "Your official police badge. It's seen better days but still commands respect.",
+            "categories": ["WEARABLE"],
+            "slot": "ACCESSORY",
+            "weight": 0.1,
+            "style_rating": 5,
+            "effects": [
+                {
+                    "attribute": "authority",
+                    "value": 2,
+                    "description": "A symbol of your position and authority."
+                }
+            ]
+        },
+        {
+            "id": "notebook",
+            "name": "Detective's Notebook",
+            "description": "A well-worn notebook filled with case notes and observations.",
+            "categories": ["TOOL"],
+            "weight": 0.3,
+            "effects": [
+                {
+                    "attribute": "logic",
+                    "value": 1,
+                    "description": "Helps organize your thoughts and observations."
+                }
+            ]
+        },
+        {
+            "id": "pen",
+            "name": "Reliable Pen",
+            "description": "A sturdy pen that's never run out of ink when you needed it most.",
+            "categories": ["TOOL"],
+            "weight": 0.05,
+            "effects": [
+                {
+                    "attribute": "perception",
+                    "value": 1,
+                    "description": "Helps you focus on details when taking notes."
+                }
+            ]
+        }
+    ]
     mock_config.quests = {}
     mock_config.items = {}
     mock_config.clues = {}
