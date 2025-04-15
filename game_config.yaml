@@ -6,12 +6,240 @@ game_settings:
   starting_location: "warehouse_entrance"
   default_time: "Morning"
 
+# Item Sets (for matching set bonuses)
+item_sets:
+  detective_suit:
+    id: "detective_suit"
+    name: "Classic Detective's Attire"
+    description: "A timeless ensemble that commands respect and attention."
+    required_pieces: ["detective_hat", "detective_coat", "detective_slacks", "detective_shoes"]
+    set_bonus:
+      - attribute: "authority"
+        value: 2
+        description: "The complete detective's outfit grants an air of unmistakable authority."
+      - attribute: "intimidation"
+        value: 1
+        description: "People tend to be more forthcoming when faced with the full detective regalia."
+
+  casual_wear:
+    id: "casual_wear"
+    name: "Inconspicuous Attire"
+    description: "Blend in with the crowd."
+    required_pieces: ["worn_jacket", "casual_pants", "sneakers"]
+    set_bonus:
+      - attribute: "empathy"
+        value: 1
+        description: "People feel more at ease around someone dressed casually."
+      - attribute: "stealth"
+        value: 2
+        description: "It's easier to go unnoticed in everyday clothing."
+
+# Items Configuration
 items:
-  test:
-    id: "test"
-    name: "test"
-    description: "A test item"
-    effects: 
+  # Wearables - Detective Set
+  detective_hat:
+    id: "detective_hat"
+    name: "Well-Worn Detective's Hat"
+    description: "A classic fedora that's seen its share of cases. The brim is perfect for shielding your eyes during long stakeouts."
+    categories: ["WEARABLE"]
+    slot: "HEAD"
+    weight: 0.5
+    style_rating: 7
+    effects:
+      - attribute: "perception"
+        value: 1
+        description: "The hat's brim helps focus your attention on details."
+      - attribute: "authority"
+        value: 1
+        description: "A symbol of your profession."
+    set_id: "detective_suit"
+
+  detective_coat:
+    id: "detective_coat"
+    name: "Weathered Trench Coat"
+    description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 2.0
+    style_rating: 8
+    effects:
+      - attribute: "composure"
+        value: 2
+        description: "The coat's weight provides a grounding presence."
+      - attribute: "authority"
+        value: 1
+        description: "A classic symbol of detective work."
+      - attribute: "endurance"
+        value: -1
+        description: "The heavy coat can be tiring to wear."
+    set_id: "detective_suit"
+
+  detective_slacks:
+    id: "detective_slacks"
+    name: "Professional Slacks"
+    description: "Well-pressed pants with subtle pinstripes. They've been through countless stakeouts but still maintain their dignity."
+    categories: ["WEARABLE"]
+    slot: "LEGS"
+    weight: 1.0
+    style_rating: 6
+    effects:
+      - attribute: "composure"
+        value: 1
+        description: "Looking professional helps maintain composure."
+    set_id: "detective_suit"
+
+  detective_shoes:
+    id: "detective_shoes"
+    name: "Reliable Oxford Shoes"
+    description: "Sturdy leather shoes with rubber soles. Good for both chasing suspects and maintaining professional appearance."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 1.2
+    style_rating: 6
+    effects:
+      - attribute: "agility"
+        value: 1
+        description: "Well-broken in and comfortable for running."
+      - attribute: "stealth"
+        value: -1
+        description: "The leather soles can be noisy on hard surfaces."
+    set_id: "detective_suit"
+
+  # Casual Wear Set
+  worn_jacket:
+    id: "worn_jacket"
+    name: "Worn Leather Jacket"
+    description: "A comfortable jacket that's seen better days. It helps you blend in with the crowd."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.5
+    style_rating: 5
+    effects:
+      - attribute: "empathy"
+        value: 1
+        description: "The casual appearance puts people at ease."
+      - attribute: "authority"
+        value: -1
+        description: "Less intimidating than professional attire."
+    set_id: "casual_wear"
+
+  casual_pants:
+    id: "casual_pants"
+    name: "Comfortable Jeans"
+    description: "Well-worn jeans that allow for easy movement."
+    categories: ["WEARABLE"]
+    slot: "LEGS"
+    weight: 0.8
+    style_rating: 4
+    effects:
+      - attribute: "agility"
+        value: 1
+        description: "Flexible material allows for better movement."
+    set_id: "casual_wear"
+
+  sneakers:
+    id: "sneakers"
+    name: "Quiet Sneakers"
+    description: "Rubber-soled shoes perfect for moving silently."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 0.7
+    style_rating: 3
+    effects:
+      - attribute: "stealth"
+        value: 2
+        description: "Soft soles make little noise."
+      - attribute: "authority"
+        value: -1
+        description: "Too casual for formal situations."
+    set_id: "casual_wear"
+
+  # Accessories
+  lucky_watch:
+    id: "lucky_watch"
+    name: "Lucky Watch"
+    description: "An old watch that's never let you down. Something about it helps you think clearly."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.2
+    style_rating: 5
+    effects:
+      - attribute: "logic"
+        value: 1
+        description: "The rhythmic ticking helps organize your thoughts."
+      - attribute: "composure"
+        value: 1
+        description: "A familiar comfort in stressful situations."
+
+  reading_glasses:
+    id: "reading_glasses"
+    name: "Reading Glasses"
+    description: "Simple reading glasses that help with detailed work."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.1
+    style_rating: 4
+    effects:
+      - attribute: "perception"
+        value: 2
+        description: "Helps spot small details."
+      - attribute: "reaction"
+        value: -1
+        description: "Slightly reduces peripheral vision."
+
+  # Containers
+  evidence_bag:
+    id: "evidence_bag"
+    name: "Evidence Collection Kit"
+    description: "A professional kit for collecting and organizing evidence."
+    categories: ["CONTAINER"]
+    weight: 1.0
+    capacity: 5.0
+    allowed_categories: ["EVIDENCE"]
+
+  toolbox:
+    id: "toolbox"
+    name: "Detective's Toolbox"
+    description: "A compact box containing various investigation tools."
+    categories: ["CONTAINER"]
+    weight: 2.0
+    capacity: 8.0
+    allowed_categories: ["TOOL"]
+
+  # Consumables
+  coffee:
+    id: "coffee"
+    name: "Thermos of Coffee"
+    description: "Hot, black coffee. Helps keep you alert."
+    categories: ["CONSUMABLE"]
+    weight: 0.5
+    stackable: true
+    effects:
+      - attribute: "perception"
+        value: 1
+        duration: 30
+        description: "The caffeine helps you stay alert."
+      - attribute: "composure"
+        value: -1
+        duration: 30
+        description: "Makes you a bit jittery."
+
+  painkillers:
+    id: "painkillers"
+    name: "Painkillers"
+    description: "Generic over-the-counter painkillers."
+    categories: ["CONSUMABLE"]
+    weight: 0.1
+    stackable: true
+    effects:
+      - attribute: "endurance"
+        value: 2
+        duration: 60
+        description: "Helps you push through the pain."
+      - attribute: "perception"
+        value: -1
+        duration: 60
+        description: "Slightly dulls your senses."
 
 inner_voices:
 
