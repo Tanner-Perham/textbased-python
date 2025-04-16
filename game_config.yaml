@@ -17,6 +17,11 @@ game_settings:
         - attribute: "authority"
           value: 2
           description: "A symbol of your position and authority."
+      hidden_lore: "Badge number 738 - the same number worn by the legendary Captain Morris who cleaned up the Department in the 70s. Some officers believe it's a lucky number."
+      hidden_clues:
+        - "There's a small dent on the back from when it stopped a knife during your first year on the force."
+      perception_difficulty: 8
+      wisdom_difficulty: 12
     - id: "notebook"
       name: "Detective's Notebook"
       description: "A well-worn notebook filled with case notes and observations."
@@ -51,6 +56,12 @@ game_settings:
       weight: 1.0
       capacity: 5.0
       allowed_categories: ["EVIDENCE"]
+      hidden_clues:
+        - "There's a Department stamp showing this kit was issued over 5 years ago, though all the supplies look new."
+        - "The fingerprint powder appears to be a newer formula than what is standard issue."
+      hidden_usage: "You can use the specialized bags to collect trace evidence that would be missed with standard collection techniques."
+      perception_difficulty: 10
+      wisdom_difficulty: 8
     - id: "coffee"
       name: "Thermos of Coffee"
       description: "Hot, black coffee. Helps keep you alert."
@@ -67,6 +78,8 @@ game_settings:
           value: -1
           duration: 30
           description: "Makes you a bit jittery."
+      hidden_usage: "You've found that taking a few sips right before questioning a suspect gives you just the right edge of alertness without the full jitters."
+      wisdom_difficulty: 6
     - id: "casual_pants"
       name: "Comfortable Jeans"
       description: "Well-worn jeans that allow for easy movement."
@@ -109,6 +122,31 @@ game_settings:
           value: -1
           description: "Less intimidating than professional attire."
       set_id: "casual_wear"
+    - id: "detective_coat"
+      name: "Weathered Trench Coat"
+      description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
+      categories: ["WEARABLE"]
+      slot: "TORSO"
+      weight: 2.0
+      style_rating: 8
+      effects:
+        - attribute: "composure"
+          value: 2
+          description: "The coat's weight provides a grounding presence."
+        - attribute: "authority"
+          value: 1
+          description: "A classic symbol of detective work."
+        - attribute: "endurance"
+          value: -1
+          description: "The heavy coat can be tiring to wear."
+      set_id: "detective_suit"
+      hidden_lore: "This coat was a gift from your mentor, Chief Detective Henderson, when you made detective. He wore it for 15 years and solved the infamous Harborside Strangler case while wearing it."
+      hidden_clues: 
+        - "Several of the inner pockets have been modified to be hidden or waterproof."
+        - "There's a small bloodstain on the inside lining that's not yours."
+      hidden_usage: "The coat's many hidden pockets could be used to conceal small evidence or tools that you don't want others to know you're carrying."
+      perception_difficulty: 12
+      wisdom_difficulty: 10
 
 # Item Sets (for matching set bonuses)
 item_sets:
@@ -158,25 +196,6 @@ items:
         description: "A symbol of your profession."
     set_id: "detective_suit"
 
-  detective_coat:
-    id: "detective_coat"
-    name: "Weathered Trench Coat"
-    description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
-    categories: ["WEARABLE"]
-    slot: "TORSO"
-    weight: 2.0
-    style_rating: 8
-    effects:
-      - attribute: "composure"
-        value: 2
-        description: "The coat's weight provides a grounding presence."
-      - attribute: "authority"
-        value: 1
-        description: "A classic symbol of detective work."
-      - attribute: "endurance"
-        value: -1
-        description: "The heavy coat can be tiring to wear."
-    set_id: "detective_suit"
 
   detective_slacks:
     id: "detective_slacks"
@@ -226,6 +245,11 @@ items:
         value: -1
         description: "Less intimidating than professional attire."
     set_id: "casual_wear"
+    hidden_lore: "This was your go-to jacket during your undercover years. It helped you infiltrate the Eastside Crew and bring down their gun-running operation."
+    hidden_clues:
+      - "There's a sewn-up knife slash on the left side that you got in a bar fight with a suspect."
+      - "The inside pocket has the initials 'C.D.' written in small letters - the alias you used undercover."
+    perception_difficulty: 11
 
   casual_pants:
     id: "casual_pants"
@@ -274,6 +298,12 @@ items:
       - attribute: "composure"
         value: 1
         description: "A familiar comfort in stressful situations."
+    hidden_lore: "This watch belonged to your father, who was also a detective. He always said it saved his life during the West Side gang wars, but never explained how."
+    hidden_clues:
+      - "The back panel seems to have a very thin seam that doesn't match the rest of the design."
+    hidden_usage: "If you press and hold the winding crown for 5 seconds, the back panel opens to reveal a hidden compartment just large enough for a small key or microfilm."
+    perception_difficulty: 15
+    wisdom_difficulty: 8
 
   reading_glasses:
     id: "reading_glasses"
@@ -318,6 +348,8 @@ items:
         value: -1
         duration: 30
         description: "Makes you a bit jittery."
+    hidden_usage: "You've found that taking a few sips right before questioning a suspect gives you just the right edge of alertness without the full jitters."
+    wisdom_difficulty: 6
 
   painkillers:
     id: "painkillers"
@@ -335,6 +367,176 @@ items:
         value: -1
         duration: 60
         description: "Slightly dulls your senses."
+
+  # Quest Items
+  mysterious_key:
+    id: "mysterious_key"
+    name: "Tarnished Brass Key"
+    description: "An old brass key with no obvious markings. It's unclear what it might open."
+    categories: ["QUEST_ITEM"]
+    weight: 0.1
+    hidden_lore: "This style of key was commonly used for security deposit boxes at First National Bank during the 1980s."
+    hidden_clues:
+      - "There's a tiny engraving on the shaft that reads 'Box 447'"
+      - "The wear pattern suggests it's been used frequently, but not recently"
+      - "There are faint traces of a blue substance in the grooves"
+    hidden_usage: "The unusual size and pattern suggests it might fit older security boxes or safes rather than standard door locks."
+    perception_difficulty: 14
+    wisdom_difficulty: 11
+
+  torn_photograph:
+    id: "torn_photograph"
+    name: "Torn Photograph"
+    description: "A photograph torn in half. It shows part of a warehouse and what might be a person's arm."
+    categories: ["EVIDENCE", "QUEST_ITEM"]
+    weight: 0.05
+    hidden_clues:
+      - "In the background, barely visible, is a sign with partial text '...RBOR 7'"
+      - "The lighting and shadows suggest the photo was taken at dusk"
+      - "There's a date stamp on the back from 3 years ago"
+    perception_difficulty: 12
+
+  # Items for the Analytical Detective
+  magnifying_glass:
+    id: "magnifying_glass"
+    name: "Detective's Magnifying Glass"
+    description: "A high-quality magnifying glass for examining evidence in detail."
+    categories: ["TOOL"]
+    weight: 0.2
+    effects:
+      - attribute: "perception"
+        value: 2
+        description: "Allows you to see small details that would otherwise be missed."
+      - attribute: "logic"
+        value: 1
+        description: "Helps you analyze evidence methodically."
+    hidden_lore: "This magnifying glass was handed down from Detective Morrison, known for solving the infamous Series Six murders using nothing but trace evidence analysis."
+
+  crime_scene_kit:
+    id: "crime_scene_kit"
+    name: "Forensic Analysis Kit"
+    description: "A comprehensive kit containing tools for collecting and analyzing evidence at crime scenes."
+    categories: ["TOOL", "CONTAINER"]
+    weight: 1.5
+    capacity: 3.0
+    effects:
+      - attribute: "logic"
+        value: 2
+        description: "Provides scientific tools for evidence analysis."
+      - attribute: "memory"
+        value: 1
+        description: "The systematic approach helps catalog details for later recall."
+    hidden_usage: "The kit includes specialized reagents that can reveal latent fingerprints and chemical traces invisible to the naked eye."
+    perception_difficulty: 12
+    wisdom_difficulty: 8
+
+  # Items for the Persuasive Detective
+  professional_attire:
+    id: "professional_attire"
+    name: "Tailored Detective Suit"
+    description: "A perfectly tailored suit that commands respect and attention."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.8
+    style_rating: 9
+    effects:
+      - attribute: "authority"
+        value: 2
+        description: "Projects an air of professionalism and competence."
+      - attribute: "suggestion"
+        value: 1
+        description: "People tend to trust well-dressed professionals."
+      - attribute: "agility"
+        value: -1
+        description: "The formal attire restricts your movement slightly."
+    set_id: "professional_set"
+
+  confidence_charm:
+    id: "confidence_charm"
+    name: "Lucky Detective's Charm"
+    description: "A small medallion that you've carried through countless interrogations. It gives you confidence."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.1
+    effects:
+      - attribute: "suggestion"
+        value: 2
+        description: "The confidence it provides makes your suggestions more compelling."
+      - attribute: "empathy"
+        value: 1
+        description: "The comfort it provides helps you focus on others' emotions."
+    hidden_lore: "This charm belonged to the legendary negotiator Captain Reynolds who talked down 27 hostage situations without a single casualty."
+
+  voice_recorder:
+    id: "voice_recorder"
+    name: "Digital Voice Recorder"
+    description: "A high-quality digital recorder for capturing interviews and ambient sounds."
+    categories: ["TOOL"]
+    weight: 0.3
+    effects:
+      - attribute: "memory"
+        value: 1
+        description: "Allows you to review conversations for missed details."
+      - attribute: "empathy"
+        value: 1
+        description: "Listening to recorded voices helps you catch emotional undertones."
+    hidden_usage: "The recorder has a special frequency setting that can pick up whispers from up to 20 feet away."
+    perception_difficulty: 10
+
+  # Items for the Field Detective
+  sturdy_boots:
+    id: "sturdy_boots"
+    name: "Tactical Field Boots"
+    description: "Tough, waterproof boots with excellent traction and ankle support."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 1.4
+    style_rating: 4
+    effects:
+      - attribute: "agility"
+        value: 2
+        description: "Provides excellent grip and support for running and climbing."
+      - attribute: "endurance"
+        value: 1
+        description: "Reduces foot fatigue during long periods of standing or walking."
+      - attribute: "stealth"
+        value: -1
+        description: "The heavy soles can make some noise on hard surfaces."
+    set_id: "field_set"
+
+  weatherproof_jacket:
+    id: "weatherproof_jacket"
+    name: "All-Weather Field Jacket"
+    description: "A durable jacket that protects against rain, wind, and cold while providing ample pocket space."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.7
+    style_rating: 5
+    effects:
+      - attribute: "endurance"
+        value: 2
+        description: "Protects against the elements, allowing you to work in harsh conditions."
+      - attribute: "composure"
+        value: 1
+        description: "The comfort it provides helps you stay focused in stressful situations."
+    set_id: "field_set"
+    hidden_clues:
+      - "The inside pocket has a waterproof lining perfect for storing evidence in wet conditions."
+
+  first_aid_kit:
+    id: "first_aid_kit"
+    name: "Tactical First Aid Kit"
+    description: "A compact but comprehensive first aid kit for emergency treatment in the field."
+    categories: ["TOOL", "CONSUMABLE"]
+    weight: 0.8
+    stackable: true
+    quantity: 1
+    effects:
+      - attribute: "composure"
+        value: 1
+        description: "Having medical supplies on hand helps you stay calm in emergencies."
+    hidden_usage: "Contains specialized items for treating wounds that aren't in standard first aid kits."
+    perception_difficulty: 8
 
 inner_voices:
 
@@ -589,6 +791,17 @@ dialogue_trees:
       - id: "thank_martinez"
         text: "Thank you, this is valuable evidence."
         next_node: ""
+        consequences:
+        - effect_type: "quest"
+          data:
+            action: "complete_objective"
+            quest_id: "main_investigation"
+            objective_id: "initial_investigation"
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "warehouse_manifest"
+            description: "A manifest showing inventory discrepancies at the warehouse"
 
   chen_default:
     id: "chen_default"

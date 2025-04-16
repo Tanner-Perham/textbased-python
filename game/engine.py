@@ -14,6 +14,7 @@ from quest.quest_manager import QuestManager
 from save.save_load import SaveManager
 from ui.dialogue_ui import DialogueMode
 from dialogue.response import DialogueResponse
+from character.character_creator import create_character
 
 
 class GameEngine:
@@ -28,6 +29,7 @@ class GameEngine:
         self.previous_location = None
         self.game_state = GameState()
         self.game_state.current_location = self.current_location
+        self.game_state.config = config  # Store config in game state for access in other modules
 
         # Initialize quest manager with game state
         self.quest_manager = QuestManager(self.game_state)
@@ -35,11 +37,6 @@ class GameEngine:
         # Add quests from config to game state
         for quest in config.quests.values():
             self.game_state.add_quest(quest)
-
-        # Start the main quest automatically
-        main_quests = [quest for quest in config.quests.values() if quest.is_main_quest]
-        if main_quests:
-            self.start_quest(main_quests[0].id)
 
         # Initialize save manager
         self.save_manager = SaveManager()
@@ -54,14 +51,35 @@ class GameEngine:
 
         # Start time for playtime tracking
         self.start_time = time.time()
+        
+        # Reference to the UI application, set externally
+        self.app = None
+        
+        # Flag to track if character creation has been completed
+        self.character_created = False
 
-        # Add starting items to inventory
-        for item_data in config.game_settings.starting_inventory:
-            try:
-                item = ConfigLoader.create_item(item_data['id'], item_data)
-                self.game_state.inventory_manager.add_item(item)
-            except Exception as e:
-                print(f"Error adding starting item {item_data.get('id', 'unknown')}: {str(e)}")
+    def start_game(self) -> None:
+        """Start the game after character creation."""
+        self.character_created = True
+        
+        # Start the main quest automatically
+        main_quests = [quest for quest in self.config.quests.values() if quest.is_main_quest]
+        if main_quests:
+            self.start_quest(main_quests[0].id)
+            
+        # Set the starting location
+        self.navigate_to(self.config.game_settings.starting_location)
+            
+        # Give starting inventory items if defined in config
+        if hasattr(self.config.game_settings, 'starting_inventory'):
+            for item_def in self.config.game_settings.starting_inventory:
+                item_id = item_def.get('id')
+                if item_id and item_id in self.config.items:
+                    self.game_state.add_item(self.config.items[item_id])
+
+    def start_character_creation(self) -> None:
+        """Start the character creation process."""
+        create_character(self)
 
     def current_location_info(self) -> str:
         """Return the current location name."""
@@ -92,8 +110,13 @@ class GameEngine:
             return self._format_response(response, notifications)
 
         elif parts[0] == "examine" and len(parts) > 1:
-            item = parts[1]
-            response = f"You examine the {item} closely."
+            item_name = " ".join(parts[1:])
+            response = self._handle_examine_item(item_name)
+            return self._format_response(response, notifications)
+
+        elif parts[0] == "look" and len(parts) > 2 and parts[1] == "at":
+            item_name = " ".join(parts[2:])
+            response = self._handle_examine_item(item_name)
             return self._format_response(response, notifications)
 
         elif parts[0] in ["talk", "speak"] and len(parts) > 1:
@@ -178,11 +201,6 @@ class GameEngine:
         elif parts[0] == "unequip" and len(parts) > 1:
             slot_name = " ".join(parts[1:])
             response = self._handle_unequip_item(slot_name)
-            return self._format_response(response, notifications)
-
-        elif parts[0] == "examine" and len(parts) > 1:
-            item_name = " ".join(parts[1:])
-            response = self._handle_examine_item(item_name)
             return self._format_response(response, notifications)
 
         elif parts[0] == "use" and len(parts) > 1:
@@ -489,44 +507,55 @@ class GameEngine:
 
     def _handle_show_quests(self) -> str:
         """Handle the quest log command."""
-        all_quests = self.quest_manager.game_state.get_all_quests()
         active_quests = self.quest_manager.game_state.get_active_quests()
         completed_quests = self.quest_manager.game_state.get_completed_quests()
         failed_quests = self.quest_manager.game_state.get_failed_quests()
 
-        response = "Quest Log:\n\n"
-
-        if all_quests:
-            response += "All Quests:\n"
-            for quest in all_quests:
-                response += f"- {quest.title}\n"
-            response += "\n"
+        response = "Quest Log:\n"
 
         if active_quests:
             response += "Active Quests:\n"
             for quest in active_quests:
-                response += f"- {quest.title}\n"
-                current_stage = next((stage for stage in quest.stages 
-                                    if stage.status == "InProgress"), None)
-                if current_stage:
-                    response += f"  Current Stage: {current_stage.title}\n"
-                    response += f"  {current_stage.description}\n"
-                    for obj in current_stage.objectives:
-                        status = "✓" if self.quest_manager.is_objective_completed(quest.id, obj.id) else "○"
-                        optional = "(Optional) " if obj.get("is_optional", False) else ""
-                        response += f"  {status} {optional}{obj.get('description', '')}\n"
+                response += f"- {quest.title}: {quest.description}\n"
+                # Get active stage ID using game_state method
+                active_stage_id = self.game_state.get_active_stage(quest.id)
+                if active_stage_id:
+                    # Find the stage with the active stage ID
+                    current_stage = next((stage for stage in quest.stages 
+                                        if stage.id == active_stage_id), None)
+                    if current_stage:
+                        response += f"  Current Stage: {current_stage.title}\n"
+                        response += f"  {current_stage.description}\n"
+                        
+                        # Show objectives with completion status
+                        incomplete_objectives = []
+                        for obj in current_stage.objectives:
+                            is_completed = self.quest_manager.is_objective_completed(quest.id, obj.get('id', ''))
+                            status = "✓" if is_completed else "○"
+                            optional = "(Optional) " if obj.get("is_optional", False) else ""
+                            response += f"  {status} {optional}{obj.get('description', '')}\n"
+                            
+                            # Track incomplete objectives for next steps
+                            if not is_completed and not obj.get("is_optional", False):
+                                incomplete_objectives.append(obj)
+                        
+                        # Show next objective(s)
+                        if incomplete_objectives:
+                            response += "  Next Steps:\n"
+                            for obj in incomplete_objectives[:2]:  # Show up to 2 next objectives
+                                response += f"  → {obj.get('description', '')}\n"
                 response += "\n"
 
         if completed_quests:
             response += "Completed Quests:\n"
             for quest in completed_quests:
-                response += f"- {quest.title}\n"
+                response += f"- {quest.title}: {quest.description[:50]}...\n"
             response += "\n"
 
         if failed_quests:
             response += "Failed Quests:\n"
             for quest in failed_quests:
-                response += f"- {quest.title}\n"
+                response += f"- {quest.title}: {quest.description[:50]}...\n"
             response += "\n"
 
         if not active_quests and not completed_quests and not failed_quests:
@@ -543,8 +572,14 @@ class GameEngine:
         if quest_id not in self.game_state.quest_log:
             return f"Quest '{quest.title}' is not active."
 
+        # Get active stage ID using game_state method
+        active_stage_id = self.game_state.get_active_stage(quest_id)
+        if not active_stage_id:
+            return f"Quest '{quest.title}' has no active stage."
+            
+        # Find the stage with the active stage ID
         current_stage = next((stage for stage in quest.stages 
-                            if stage.status == "InProgress"), None)
+                            if stage.id == active_stage_id), None)
         if not current_stage:
             return f"Quest '{quest.title}' has no active stage."
 
@@ -553,7 +588,8 @@ class GameEngine:
         response += f"{current_stage.description}\n\n"
         response += "Objectives:\n"
         for obj in current_stage.objectives:
-            status = "✓" if obj.get("is_completed", False) else "○"
+            is_completed = self.quest_manager.is_objective_completed(quest_id, obj.get('id', ''))
+            status = "✓" if is_completed else "○"
             optional = "(Optional) " if obj.get("is_optional", False) else ""
             response += f"{status} {optional}{obj.get('description', '')}\n"
 
@@ -567,18 +603,25 @@ class GameEngine:
 
         response = f"Quest: {quest.title}\n"
         response += f"Type: {'Main Quest' if quest.is_main_quest else 'Side Quest'}\n"
-        response += f"Status: {self.game_state.quest_log.get(quest_id, QuestStatus.NotStarted).name}\n\n"
+        response += f"Status: {self.game_state.get_quest_status(quest_id).name}\n\n"
         response += f"Description:\n{quest.description}\n\n"
 
         if quest.stages:
             response += "Stages:\n"
             for stage in quest.stages:
-                response += f"- {stage.title}\n"
+                # Get a marker to show the current active stage
+                active_marker = ""
+                active_stage_id = self.game_state.get_active_stage(quest_id)
+                if active_stage_id and stage.id == active_stage_id:
+                    active_marker = " [CURRENT]"
+                    
+                response += f"- {stage.title}{active_marker}\n"
                 response += f"  {stage.description}\n"
                 if stage.objectives:
                     response += "  Objectives:\n"
                     for obj in stage.objectives:
-                        status = "✓" if obj.get("is_completed", False) else "○"
+                        is_completed = self.game_state.is_objective_completed(quest_id, obj.get('id', ''))
+                        status = "✓" if is_completed else "○"
                         optional = "(Optional) " if obj.get("is_optional", False) else ""
                         response += f"  {status} {optional}{obj.get('description', '')}\n"
                 response += "\n"
@@ -594,15 +637,20 @@ class GameEngine:
         response = "Active Quests:\n\n"
         for quest in active_quests:
             response += f"- {quest.title}\n"
-            current_stage = next((stage for stage in quest.stages 
-                                if stage.status == "InProgress"), None)
-            if current_stage:
-                response += f"  Current Stage: {current_stage.title}\n"
-                response += f"  {current_stage.description}\n"
-                for obj in current_stage.objectives:
-                    status = "✓" if obj.get("is_completed", False) else "○"
-                    optional = "(Optional) " if obj.get("is_optional", False) else ""
-                    response += f"  {status} {optional}{obj.get('description', '')}\n"
+            # Get active stage ID using game_state method
+            active_stage_id = self.game_state.get_active_stage(quest.id)
+            if active_stage_id:
+                # Find the stage with the active stage ID
+                current_stage = next((stage for stage in quest.stages 
+                                    if stage.id == active_stage_id), None)
+                if current_stage:
+                    response += f"  Current Stage: {current_stage.title}\n"
+                    response += f"  {current_stage.description}\n"
+                    for obj in current_stage.objectives:
+                        is_completed = self.quest_manager.is_objective_completed(quest.id, obj.get('id', ''))
+                        status = "✓" if is_completed else "○"
+                        optional = "(Optional) " if obj.get("is_optional", False) else ""
+                        response += f"  {status} {optional}{obj.get('description', '')}\n"
             response += "\n"
 
         return response
@@ -624,7 +672,7 @@ class GameEngine:
             [
                 "Available commands:",
                 "  look around - Observe your surroundings",
-                "  examine <item> - Get a detailed description of an item",
+                "  examine <item> or look at <item> - Examine an item closely, possibly discovering hidden details",
                 "  talk to <NPC> - Engage in conversation with an NPC",
                 "  go/walk <direction> - Move in the specified direction",
                 "  quests - Open the quest log",
@@ -732,8 +780,8 @@ class GameEngine:
             responses = self.dialogue_handler.start_dialogue(matched_npc_id, self.game_state)
             
             # Start dialogue mode in the UI
-            if hasattr(self, 'ui') and self.ui:
-                self.ui.dialogue_mode.start_dialogue(npc_display_name, responses)
+            if hasattr(self, 'app') and self.app:
+                self.app.dialogue_mode.start_dialogue(npc_display_name, responses)
                 return ""  # Empty response since UI will handle display
             else:
                 # Fallback to text-based display if UI is not available
@@ -872,8 +920,10 @@ class GameEngine:
         if not item:
             return f"You don't have '{item_name}' in your inventory."
         
+        # Start with basic description
         response = f"{item.name}:\n{item.description}\n"
         
+        # Add type-specific information
         if isinstance(item, Wearable):
             response += f"\nSlot: {item.slot.name}"
             if item.set_id:
@@ -885,12 +935,65 @@ class GameEngine:
         
         elif isinstance(item, Container):
             response += f"\nCapacity: {item.capacity}"
-            if item.current_weight > 0:
+            if hasattr(item, 'current_weight') and item.current_weight > 0:
                 response += f"\nCurrent weight: {item.current_weight}"
             if item.contents:
                 response += "\nContents:"
                 for content in item.contents:
                     response += f"\n- {content.name}"
+        
+        # If the item already has discovered hidden information, just show it
+        if item.discovered:
+            if item.hidden_lore:
+                response += f"\n\nLore: {item.hidden_lore}"
+            if item.hidden_clues:
+                response += "\n\nClues:"
+                for clue in item.hidden_clues:
+                    response += f"\n- {clue}"
+            if item.hidden_usage:
+                response += f"\n\nUsage: {item.hidden_usage}"
+            return response
+        
+        # Try to discover hidden information through skill checks
+        discovered_something = False
+        
+        # Only perform checks if there's something to discover
+        has_hidden_info = bool(item.hidden_lore or item.hidden_clues or item.hidden_usage)
+        
+        # Perform perception check if needed
+        if item.perception_difficulty > 0 and has_hidden_info:
+            perception_success, roll, difficulty = self._perform_skill_check("perception", item.perception_difficulty)
+            
+            if perception_success:
+                # Notify player of successful check
+                response += f"\n\n[Perception Check: Success (Roll: {roll}/{difficulty})]"
+                discovered_something = True
+                
+                # Reveal hidden clues on successful perception check
+                if item.hidden_clues:
+                    response += "\n\nYou notice:"
+                    for clue in item.hidden_clues:
+                        response += f"\n- {clue}"
+        
+        # Perform wisdom check if needed
+        if item.wisdom_difficulty > 0 and has_hidden_info:
+            wisdom_success, roll, difficulty = self._perform_skill_check("wisdom", item.wisdom_difficulty)
+            
+            if wisdom_success:
+                # Notify player of successful check
+                response += f"\n\n[Wisdom Check: Success (Roll: {roll}/{difficulty})]"
+                discovered_something = True
+                
+                # Reveal lore and usage hints on successful wisdom check
+                if item.hidden_lore:
+                    response += f"\n\nYou recall: {item.hidden_lore}"
+                
+                if item.hidden_usage:
+                    response += f"\n\nYou realize: {item.hidden_usage}"
+        
+        # Mark as discovered if any checks succeeded
+        if discovered_something:
+            item.discovered = True
         
         return response
 
@@ -985,9 +1088,12 @@ class GameEngine:
     def _find_item_in_inventory(self, item_name: str) -> Optional[Item]:
         """Find an item in the inventory by name."""
         inventory = self.game_state.inventory_manager
+        
+        # Combine all items from equipped, inventory, and containers
         all_items = (
-            list(inventory.equipped_items.values()) +
-            inventory.get_items_by_category(ItemCategory.WEARABLE)
+            list(filter(None, inventory.equipped_items.values())) +  # Equipped items
+            inventory.items +  # Regular inventory items
+            inventory.containers  # Containers
         )
         
         # First try exact match
@@ -1001,3 +1107,40 @@ class GameEngine:
                 return item
         
         return None
+
+    def _perform_skill_check(self, skill_name: str, difficulty: int) -> tuple[bool, int, int]:
+        """
+        Perform a skill check for a given skill and difficulty.
+        
+        Args:
+            skill_name: The name of the skill to check
+            difficulty: The difficulty level of the check
+            
+        Returns:
+            tuple[bool, int, int]: Success result, roll value, difficulty
+        """
+        player_skill = 0
+        if skill_name in self.game_state.player.skills:
+            player_skill = self.game_state.player.skills[skill_name]
+        
+        # Roll a d20
+        roll = random.randint(1, 20)
+        
+        # Check if roll + skill meets or exceeds difficulty
+        success = (roll + player_skill) >= difficulty
+        
+        return success, roll, difficulty
+
+    def navigate_to(self, location_id: str) -> None:
+        """
+        Navigate the player to a new location.
+        
+        Args:
+            location_id: The ID of the location to navigate to
+        """
+        if location_id in self.config.locations:
+            self.current_location = location_id
+            self.game_state.current_location = location_id
+            self.game_state.visited_locations.add(location_id)
+        else:
+            print(f"Warning: Tried to navigate to unknown location: {location_id}")

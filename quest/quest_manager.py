@@ -41,14 +41,14 @@ class QuestManager:
         self.notifications = []
 
     def start_quest(self, quest_id: str) -> bool:
-        """Start a quest. Returns True if successful."""
+        """Start a quest. Returns True if successful, False if already started or not found."""
         # First ensure the quest exists in the state
         quest = self.game_state.get_quest(quest_id)
         if not quest:
-            raise Exception(f"Quest {quest_id} not found")
+            return False  # Quest not found
         
         if quest.status != QuestStatus.NotStarted:
-            raise Exception(f"Quest {quest_id} is already started")
+            return True  # Quest is already started, no error needed
         
         # Now update the quest status
         if self.game_state.start_quest(quest_id):

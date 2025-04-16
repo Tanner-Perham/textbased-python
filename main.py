@@ -48,9 +48,19 @@ def main():
     game_engine.dialogue_handler = dialogue_manager
 
     # Create and run the UI
-    app = GameUI()
+    class GameAppWithCharacterCreation(GameUI):
+        """GameUI subclass that starts character creation on mount."""
+        
+        def on_mount(self) -> None:
+            """Called when app is mounted."""
+            super().on_mount()
+            
+            # Start character creation after a short delay to ensure the UI is ready
+            self.set_timer(0.5, lambda: self.game_engine.start_character_creation())
+    
+    app = GameAppWithCharacterCreation()
     app.game_engine = game_engine  # Attach game engine to UI
-    game_engine.ui = app  # Attach UI to game engine
+    game_engine.app = app  # Attach UI to game engine
     app.title = config.game_settings.title
     
     return app

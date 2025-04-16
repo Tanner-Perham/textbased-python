@@ -29,8 +29,10 @@ class Quest:
 
     def get_current_stage(self) -> Optional[QuestStage]:
         """Get the current active stage."""
+        # This method is a fallback, as the game_state.get_active_stage should normally be used
+        # We're maintaining it for backward compatibility
         for stage in self.stages:
-            if stage.status == "InProgress":
+            if stage.status == QuestStatus.InProgress:
                 return stage
         return None
 

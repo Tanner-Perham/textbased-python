@@ -154,7 +154,7 @@ class DialogueManager:
 
         if "required_items" in conditions:
             has_items = all(
-                any(item.id == item_id for item in game_state.inventory)
+                any(item.id == item_id for item in game_state.inventory_manager.items)
                 for item_id in conditions["required_items"]
             )
             if not has_items:

@@ -47,6 +47,15 @@ class ItemBase:
     effects: List[Effect] = field(default_factory=list)
     stackable: bool = False
     quantity: int = 1
+    # Hidden item properties that can be discovered through examination
+    hidden_lore: str = ""  # Hidden backstory or lore about the item
+    hidden_clues: List[str] = field(default_factory=list)  # Clues that might be relevant to quests
+    hidden_usage: str = ""  # Hidden hints about how to use the item effectively
+    # Skill check settings for discovering hidden properties
+    perception_difficulty: int = 0  # Difficulty for perception checks (0 means no check)
+    wisdom_difficulty: int = 0  # Difficulty for wisdom checks (0 means no check)
+    # Track if hidden properties have been discovered already
+    discovered: bool = False
 
 
 @dataclass(init=False)
@@ -61,7 +70,13 @@ class Item(ItemBase):
         weight: float = 0.0,
         effects: List[Effect] = None,
         stackable: bool = False,
-        quantity: int = 1
+        quantity: int = 1,
+        hidden_lore: str = "",
+        hidden_clues: List[str] = None,
+        hidden_usage: str = "",
+        perception_difficulty: int = 0,
+        wisdom_difficulty: int = 0,
+        discovered: bool = False
     ):
         super().__init__(
             id=id,
@@ -71,7 +86,13 @@ class Item(ItemBase):
             weight=weight,
             effects=effects if effects is not None else [],
             stackable=stackable,
-            quantity=quantity
+            quantity=quantity,
+            hidden_lore=hidden_lore,
+            hidden_clues=hidden_clues if hidden_clues is not None else [],
+            hidden_usage=hidden_usage,
+            perception_difficulty=perception_difficulty,
+            wisdom_difficulty=wisdom_difficulty,
+            discovered=discovered
         )
 
 
@@ -96,7 +117,13 @@ class Wearable(ItemBase):
         style_rating: int = 0,
         condition: int = 100,
         stackable: bool = False,
-        quantity: int = 1
+        quantity: int = 1,
+        hidden_lore: str = "",
+        hidden_clues: List[str] = None,
+        hidden_usage: str = "",
+        perception_difficulty: int = 0,
+        wisdom_difficulty: int = 0,
+        discovered: bool = False
     ):
         super().__init__(
             id=id,
@@ -106,7 +133,13 @@ class Wearable(ItemBase):
             weight=weight,
             effects=effects if effects is not None else [],
             stackable=stackable,
-            quantity=quantity
+            quantity=quantity,
+            hidden_lore=hidden_lore,
+            hidden_clues=hidden_clues if hidden_clues is not None else [],
+            hidden_usage=hidden_usage,
+            perception_difficulty=perception_difficulty,
+            wisdom_difficulty=wisdom_difficulty,
+            discovered=discovered
         )
         self.slot = slot
         self.set_id = set_id
@@ -133,7 +166,13 @@ class Container(ItemBase):
         effects: List[Effect] = None,
         contents: List[ItemBase] = None,
         stackable: bool = False,
-        quantity: int = 1
+        quantity: int = 1,
+        hidden_lore: str = "",
+        hidden_clues: List[str] = None,
+        hidden_usage: str = "",
+        perception_difficulty: int = 0,
+        wisdom_difficulty: int = 0,
+        discovered: bool = False
     ):
         super().__init__(
             id=id,
@@ -143,7 +182,13 @@ class Container(ItemBase):
             weight=weight,
             effects=effects if effects is not None else [],
             stackable=stackable,
-            quantity=quantity
+            quantity=quantity,
+            hidden_lore=hidden_lore,
+            hidden_clues=hidden_clues if hidden_clues is not None else [],
+            hidden_usage=hidden_usage,
+            perception_difficulty=perception_difficulty,
+            wisdom_difficulty=wisdom_difficulty,
+            discovered=discovered
         )
         self.capacity = capacity
         self.allowed_categories = allowed_categories

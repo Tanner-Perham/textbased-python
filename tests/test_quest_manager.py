@@ -141,13 +141,12 @@ def test_start_quest(setup_quest_manager):
     assert game_state.get_active_stage("main_quest") == "stage1"
     
     # Test starting a non-existent quest
-    # Since we don't have access to config in tests, this should raise an exception
-    with pytest.raises(Exception):
-        manager.start_quest("nonexistent_quest")
+    # Since we don't have access to config in tests, this should return False
+    assert not manager.start_quest("nonexistent_quest")
     
-    # Test starting an already started quest, this should raise an exception
-    with pytest.raises(Exception):
-        manager.start_quest("main_quest")
+    # Test starting an already started quest, this should return True but not change the quest
+    assert manager.start_quest("main_quest")
+    assert game_state.get_quest_status("main_quest") == QuestStatus.InProgress
     
     # Check notifications
     notifications = manager.get_active_notifications()
