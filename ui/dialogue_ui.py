@@ -95,10 +95,12 @@ class DialogueMode:
             display_name = speaker_name.name if speaker_name else response.speaker
             self.dialogue_history.append(f"{display_name}: {response.text}")
         elif isinstance(response, DialogueResponse.InnerVoice):
-            self.dialogue_history.append(f"[{response.voice_type}] {response.text}")
+            # Format inner voice without brackets to avoid markup issues
+            self.dialogue_history.append(f"Inner Voice - {response.voice_type}: {response.text}")
         elif isinstance(response, DialogueResponse.SkillCheck):
+            # Format skill check without brackets to avoid markup issues
             result = "Success" if response.success else "Failure"
-            self.dialogue_history.append(f"[Skill Check: {response.skill} - {result}]")
+            self.dialogue_history.append(f"Skill Check - {response.skill} - {result}")
 
     def select_previous(self) -> None:
         """Select the previous dialogue option."""
@@ -193,6 +195,9 @@ class DialogueMode:
         # Update the buffer with current state
         self.current_dialogue_buffer = output
         
-        # Write the formatted output
-        self.game_ui.game_output.write("\n".join(output))
-        self.game_ui.game_output.write("\n")
+        # Write the formatted output one line at a time
+        for line in output:
+            self.game_ui.game_output.write(line)
+            
+        # Add a final newline for spacing
+        self.game_ui.game_output.write("")

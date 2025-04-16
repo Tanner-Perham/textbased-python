@@ -8,7 +8,7 @@ from textual.keys import Keys
 from .overlay import GameOverlay
 from .dialogue_ui import DialogueMode
 
-class GameOutput(Log):
+class GameOutput(ScrollableContainer):
     """Widget for game output with scrolling."""
     
     DEFAULT_CSS = """
@@ -18,28 +18,85 @@ class GameOutput(Log):
         padding: 1 2;
         background: $boost;
         color: $text;
-        text-wrap: wrap;
-        overflow-y: scroll;
-        overflow-x: hidden;
+        overflow-y: auto;
         width: 100%;
-        content-align: left top;
+    }
+    
+    GameOutput > Static {
+        text-wrap: wrap;
+        width: 100%;
+        margin-bottom: 1;
     }
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.output_widgets = []
+        self._text_lines = []  # Store the text content of each widget
+        self._pending_text = ["Welcome to the game! Type 'help' for a list of commands."]
+
+    @property
+    def lines(self):
+        """Get all text lines as a list - maintains compatibility with Log widget."""
+        return self._text_lines.copy()
+
     def write(self, text: str) -> None:
-        """Write text to the log with proper wrapping."""
-        # Split text into paragraphs and process each one
-        paragraphs = text.split('\n\n')
-        for i, paragraph in enumerate(paragraphs):
-            # Add the paragraph to the log
-            super().write(paragraph)
-            # Add a newline between paragraphs (except after the last one)
-            if i < len(paragraphs) - 1:
-                super().write('\n\n')
+        """Write text to the output with proper wrapping."""
+        if not self.is_mounted:
+            # Store text until we're mounted
+            self._pending_text.append(text)
+            return
+        
+        # For an empty string or just whitespace, create an empty line
+        if not text.strip() and text:
+            static = Static("")
+            self.output_widgets.append(static)
+            self._text_lines.append("")  # Add empty line to text lines
+            self.mount(static)
+            return
+            
+        # Escape any characters that could be interpreted as Rich markup
+        escaped_text = text.replace("[", "\\[").replace("]", "]").replace(":", ":")
+            
+        # Create a Static widget for the text
+        static = Static(escaped_text)
+        self.output_widgets.append(static)
+        self._text_lines.append(text)  # Store the original text content
+        self.mount(static)
+        self.scroll_end(animate=False)  # Ensure we scroll to the new text
+
+    def clear(self) -> None:
+        """Clear all output text."""
+        for widget in self.output_widgets[:]:
+            widget.remove()
+        self.output_widgets.clear()
+        self._text_lines.clear()  # Clear the text lines as well
+
+    def compose(self) -> ComposeResult:
+        """Initially empty."""
+        # No initial widgets
+        yield from []
 
     def on_mount(self) -> None:
         """Called when widget is added to the app."""
-        self.write("Welcome to the game! Type 'help' for a list of commands.\n\n")
+        # Display any pending text
+        for text in self._pending_text:
+            if not text.strip() and text:
+                # Empty line for spacing
+                static = Static("")
+                self.output_widgets.append(static)
+                self._text_lines.append("")  # Add empty line to text lines
+            else:
+                # Escape any characters that could be interpreted as Rich markup
+                escaped_text = text.replace("[", "\\[").replace("]", "\\]").replace(":", "\\:")
+                
+                # Create a Static widget for the text
+                static = Static(escaped_text)
+                self.output_widgets.append(static)
+                self._text_lines.append(text)  # Store the original text content
+            self.mount(static)
+        self._pending_text = []
+        self.scroll_end(animate=False)
 
 class LocationBar(Static):
     """Shows current location."""
@@ -151,10 +208,10 @@ class GameUI(App):
             self.action_select()
             return
 
-        # Echo command
-        self.game_output.write("\n\n")
+        # Echo command with spacing
+        self.game_output.write("")  # Empty line for spacing
         self.game_output.write(f"> {command}")
-        self.game_output.write("\n\n")
+        self.game_output.write("")  # Empty line for spacing
         
         try:
             # Process command through game engine
@@ -164,8 +221,12 @@ class GameUI(App):
             if response == "__quit__":
                 self.exit()
             else:
-                self.game_output.write(response)
-                self.game_output.write("\n\n")
+                # Split response by double newlines and write each paragraph separately
+                paragraphs = response.split('\n\n')
+                for paragraph in paragraphs:
+                    if paragraph.strip():  # Only write non-empty paragraphs
+                        self.game_output.write(paragraph)
+                        self.game_output.write("")  # Empty line for spacing
                 
             # Update location if it changed
             self.location_bar.location = self.game_engine.current_location
