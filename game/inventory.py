@@ -11,6 +11,7 @@ class ItemCategory(Enum):
     QUEST_ITEM = "Quest Item"
     TOOL = "Tool"
     EVIDENCE = "Evidence"
+    CONTAINER = "Container"
 
 
 class WearableSlot(Enum):
@@ -147,7 +148,58 @@ class Container(ItemBase):
         self.capacity = capacity
         self.allowed_categories = allowed_categories
         self.contents = contents if contents is not None else []
-
+    
+    def add_item(self, item: Item) -> bool:
+        """Add an item to the container.
+        
+        Args:
+            item: The item to add to the container
+            
+        Returns:
+            bool: True if item was added successfully, False if rejected
+        """
+        # Check if item category is allowed
+        if not any(category in self.allowed_categories for category in item.categories):
+            return False
+            
+        # Calculate total weight including existing contents
+        current_weight = sum(item.weight * item.quantity for item in self.contents)
+        new_weight = current_weight + (item.weight * item.quantity)
+        
+        # Check if adding item would exceed capacity
+        if new_weight > self.capacity:
+            return False
+            
+        # Handle stackable items
+        if item.stackable:
+            for existing_item in self.contents:
+                if existing_item.id == item.id:
+                    existing_item.quantity += item.quantity
+                    return True
+                    
+        # Add as new item
+        self.contents.append(item)
+        return True
+    
+    def remove_item(self, item_id: str, quantity: int = 1) -> Optional[Item]:
+        """Remove an item from the container.
+        
+        Args:
+            item_id: The ID of the item to remove
+            quantity: The quantity to remove (default is 1)
+            
+        Returns:
+            Optional[Item]: The removed item, or None if item not found
+        """
+        for i, item in enumerate(self.contents):
+            if item.id == item_id:
+                if item.stackable and item.quantity > quantity:
+                    item.quantity -= quantity
+                    return item
+                else:
+                    self.contents.pop(i)
+                    return item
+        return None
 
 class InventoryManager:
     """Manages the player's inventory and equipped items."""
