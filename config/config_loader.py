@@ -140,6 +140,16 @@ class ItemSet:
 
 
 @dataclass
+class CharacterArchetype:
+    """Configuration for a character archetype."""
+    id: str
+    name: str
+    description: str
+    starting_skills: Dict[str, float]
+    starting_equipment_ids: List[str]
+
+
+@dataclass
 class GameConfig:
     """Main game configuration."""
 
@@ -150,6 +160,7 @@ class GameConfig:
     quests: Dict[str, Quest] = field(default_factory=dict)
     items: Dict[str, ItemBase] = field(default_factory=dict)  # Updated to use ItemBase
     item_sets: Dict[str, ItemSet] = field(default_factory=dict)  # Added item_sets
+    character_archetypes: Dict[str, CharacterArchetype] = field(default_factory=dict)  # Added character_archetypes
     inner_voices: List[Dict[str, Any]] = field(default_factory=list)
     thoughts: Dict[str, Any] = field(default_factory=dict)
 
@@ -209,6 +220,12 @@ class GameConfig:
             quest = Quest(id=quest_id, **quest_data, stages=stages, rewards=rewards)
             quests[quest_id] = quest
 
+        # Parse character archetypes
+        print("Parsing Character Archetypes")
+        character_archetypes = {}
+        for archetype_id, archetype_data in config_data.get("character_archetypes", {}).items():
+            character_archetypes[archetype_id] = CharacterArchetype(**archetype_data)
+
         # Parse items using the ConfigLoader
         print("Parsing Items")
         config_loader = ConfigLoader()
@@ -225,6 +242,7 @@ class GameConfig:
             quests=quests,
             items=items,
             item_sets=item_sets,
+            character_archetypes=character_archetypes,
             inner_voices=config_data.get("inner_voices", []),
             thoughts=config_data.get("thoughts", {}),
         )

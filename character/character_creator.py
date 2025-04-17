@@ -2,14 +2,14 @@
 Character creation UI for the text-based adventure game.
 """
 
-from typing import Callable, List, Optional
+from typing import Callable
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Label, Static, Footer
 
-from character.character_creation import ARCHETYPES, apply_archetype
+from character.character_creation import apply_archetype
 
 
 class SkillDisplay(Static):
@@ -53,11 +53,11 @@ class SkillDisplay(Static):
 class ArchetypeCard(Static):
     """A card displaying information about a character archetype."""
     
-    def __init__(self, archetype_id: str, **kwargs):
+    def __init__(self, game_engine, archetype_id: str, **kwargs):
         """Initialize the archetype card."""
         super().__init__(**kwargs)
         self.archetype_id = archetype_id
-        self.archetype = ARCHETYPES[archetype_id]
+        self.archetype = game_engine.config.character_archetypes[archetype_id]
         self.add_class("archetype-card")
     
     def compose(self) -> ComposeResult:
@@ -76,11 +76,19 @@ class ArchetypeCard(Static):
 class CharacterCreationScreen(Screen):
     """Character creation screen for selecting a detective archetype."""
     
-    BINDINGS = [
-        ("1", "select_archetype('analytical')", "Choose Analytical Detective"),
-        ("2", "select_archetype('persuasive')", "Choose Persuasive Detective"),
-        ("3", "select_archetype('field')", "Choose Field Detective"),
-    ]
+    def __init__(self, game_engine, on_complete: Callable[[str], None]):
+        """Initialize the character creation screen."""
+        super().__init__()
+        self.game_engine = game_engine
+        self.on_complete = on_complete
+        
+        # Dynamically create keybindings based on available archetypes
+        self.BINDINGS = []
+        for i, archetype_id in enumerate(game_engine.config.character_archetypes, 1):
+            archetype = game_engine.config.character_archetypes[archetype_id]
+            self.BINDINGS.append(
+                (str(i), f"select_archetype('{archetype_id}')", f"Choose {archetype.name}")
+            )
     
     CSS = """
     CharacterCreationScreen {
@@ -188,11 +196,6 @@ class CharacterCreationScreen(Screen):
     }
     """
     
-    def __init__(self, on_complete: Callable[[str], None]):
-        """Initialize the character creation screen."""
-        super().__init__()
-        self.on_complete = on_complete
-    
     def compose(self) -> ComposeResult:
         """Compose the character creation screen."""
         yield Label("CHARACTER CREATION", classes="title")
@@ -201,14 +204,13 @@ class CharacterCreationScreen(Screen):
         
         # Display archetype info cards
         with Horizontal(classes="archetype-container"):
-            for archetype_id in ARCHETYPES:
-                yield ArchetypeCard(archetype_id)
+            for archetype_id in self.game_engine.config.character_archetypes:
+                yield ArchetypeCard(self.game_engine, archetype_id)
         
         # Add large selection buttons at the bottom
         with Horizontal(classes="button-container"):
-            yield Button("SELECT ANALYTICAL DETECTIVE", id="select_analytical", classes="selection-button")
-            yield Button("SELECT PERSUASIVE DETECTIVE", id="select_persuasive", classes="selection-button")
-            yield Button("SELECT FIELD DETECTIVE", id="select_field", classes="selection-button")
+            for archetype_id, archetype in self.game_engine.config.character_archetypes.items():
+                yield Button(f"SELECT {archetype.name.upper()}", id=f"select_{archetype_id}", classes="selection-button")
         
         # Add footer with key bindings
         yield Footer()
@@ -218,12 +220,12 @@ class CharacterCreationScreen(Screen):
         button_id = event.button.id
         if button_id and button_id.startswith("select_"):
             archetype_id = button_id.replace("select_", "")
-            if archetype_id in ARCHETYPES:
+            if archetype_id in self.game_engine.config.character_archetypes:
                 self.select_archetype(archetype_id)
     
     def action_select_archetype(self, archetype_id: str) -> None:
         """Action to select an archetype by ID."""
-        if archetype_id in ARCHETYPES:
+        if archetype_id in self.game_engine.config.character_archetypes:
             self.select_archetype(archetype_id)
     
     def select_archetype(self, archetype_id: str) -> None:
@@ -242,5 +244,5 @@ def create_character(game_engine) -> None:
         game_engine.start_game()
     
     # Show the character creation screen
-    character_screen = CharacterCreationScreen(on_archetype_selected)
+    character_screen = CharacterCreationScreen(game_engine, on_archetype_selected)
     game_engine.app.push_screen(character_screen) 
