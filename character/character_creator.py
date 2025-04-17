@@ -86,6 +86,8 @@ class CharacterCreationScreen(Screen):
     CharacterCreationScreen {
         background: $surface;
         padding: 2 4;
+        height: 100%;
+        overflow-y: auto;
     }
     
     .title {
@@ -114,8 +116,9 @@ class CharacterCreationScreen(Screen):
     
     .archetype-container {
         width: 100%;
-        height: auto;
+        height: 95%;
         margin: 1 0;
+        overflow-y: auto;
     }
     
     .archetype-card {
@@ -123,12 +126,14 @@ class CharacterCreationScreen(Screen):
         height: auto;
         border: heavy $accent;
         padding: 1;
-        margin: 0 1;
+        margin: 0 0;
+        overflow-y: auto;
     }
     
     .archetype-name {
         text-style: bold;
         text-align: center;
+        width: 100%;
         margin-bottom: 1;
         color: $text-muted;
         background: $primary;
@@ -161,16 +166,21 @@ class CharacterCreationScreen(Screen):
         width: 100%;
         height: auto;
         margin-top: 2;
+        margin-bottom: 1;
+        dock: bottom;
+        padding: 1;
+        background: $surface;
     }
     
     .selection-button {
         width: 1fr;
-        height: 3;
+        height: 5;
         background: $success;
         color: $text;
         text-style: bold;
         content-align: center middle;
         margin: 0 1;
+        padding: 1;
     }
     
     .selection-button:hover {
@@ -187,7 +197,7 @@ class CharacterCreationScreen(Screen):
         """Compose the character creation screen."""
         yield Label("CHARACTER CREATION", classes="title")
         yield Label("Choose your detective archetype", classes="subtitle")
-        yield Label("Or press: 1 for Analytical, 2 for Persuasive, 3 for Field", classes="key-instructions")
+        # yield Label("Or press: 1 for Analytical, 2 for Persuasive, 3 for Field", classes="key-instructions")
         
         # Display archetype info cards
         with Horizontal(classes="archetype-container"):
