@@ -6,147 +6,16 @@ game_settings:
   starting_location: "warehouse_entrance"
   default_time: "Morning"
   starting_inventory:
-    - id: "police_badge"
-      name: "Police Badge"
-      description: "Your official police badge. It's seen better days but still commands respect."
-      categories: ["WEARABLE"]
-      slot: "ACCESSORY"
-      weight: 0.1
-      style_rating: 5
-      effects:
-        - attribute: "authority"
-          value: 2
-          description: "A symbol of your position and authority."
-      hidden_lore: "Badge number 738 - the same number worn by the legendary Captain Morris who cleaned up the Department in the 70s. Some officers believe it's a lucky number."
-      hidden_clues:
-        - "There's a small dent on the back from when it stopped a knife during your first year on the force."
-      perception_difficulty: 8
-      wisdom_difficulty: 12
-    - id: "notebook"
-      name: "Detective's Notebook"
-      description: "A well-worn notebook filled with case notes and observations."
-      categories: ["TOOL"]
-      weight: 0.3
-      effects:
-        - attribute: "logic"
-          value: 1
-          description: "Helps organize your thoughts and observations."
-    - id: "pen"
-      name: "Reliable Pen"
-      description: "A sturdy pen that's never run out of ink when you needed it most."
-      categories: ["TOOL"]
-      weight: 0.05
-      effects:
-        - attribute: "perception"
-          value: 1
-          description: "Helps you focus on details when taking notes."
-    - id: "flashlight"
-      name: "Police Flashlight"
-      description: "A heavy-duty flashlight with a strong beam. Perfect for dark corners and night work."
-      categories: ["TOOL"]
-      weight: 0.5
-      effects:
-        - attribute: "perception"
-          value: 2
-          description: "Illuminates dark areas and helps spot details."
-    - id: "evidence_bag"
-      name: "Evidence Collection Kit"
-      description: "A professional kit for collecting and organizing evidence."
-      categories: ["CONTAINER"]
-      weight: 1.0
-      capacity: 5.0
-      allowed_categories: ["EVIDENCE"]
-      hidden_clues:
-        - "There's a Department stamp showing this kit was issued over 5 years ago, though all the supplies look new."
-        - "The fingerprint powder appears to be a newer formula than what is standard issue."
-      hidden_usage: "You can use the specialized bags to collect trace evidence that would be missed with standard collection techniques."
-      perception_difficulty: 10
-      wisdom_difficulty: 8
-    - id: "coffee"
-      name: "Thermos of Coffee"
-      description: "Hot, black coffee. Helps keep you alert."
-      categories: ["CONSUMABLE"]
-      weight: 0.5
-      stackable: true
-      quantity: 3
-      effects:
-        - attribute: "perception"
-          value: 1
-          duration: 30
-          description: "The caffeine helps you stay alert."
-        - attribute: "composure"
-          value: -1
-          duration: 30
-          description: "Makes you a bit jittery."
-      hidden_usage: "You've found that taking a few sips right before questioning a suspect gives you just the right edge of alertness without the full jitters."
-      wisdom_difficulty: 6
-    - id: "casual_pants"
-      name: "Comfortable Jeans"
-      description: "Well-worn jeans that allow for easy movement."
-      categories: ["WEARABLE"]
-      slot: "LEGS"
-      weight: 0.8
-      style_rating: 4
-      effects:
-        - attribute: "agility"
-          value: 1
-          description: "Flexible material allows for better movement."
-      set_id: "casual_wear"
-    - id: "sneakers"
-      name: "Quiet Sneakers"
-      description: "Rubber-soled shoes perfect for moving silently."
-      categories: ["WEARABLE"]
-      slot: "FEET"
-      weight: 0.7
-      style_rating: 3
-      effects:
-        - attribute: "stealth"
-          value: 2
-          description: "Soft soles make little noise."
-        - attribute: "authority"
-          value: -1
-          description: "Too casual for formal situations."
-      set_id: "casual_wear"
-    - id: "worn_jacket"
-      name: "Worn Leather Jacket"
-      description: "A comfortable jacket that's seen better days. It helps you blend in with the crowd."
-      categories: ["WEARABLE"]
-      slot: "TORSO"
-      weight: 1.5
-      style_rating: 5
-      effects:
-        - attribute: "empathy"
-          value: 1
-          description: "The casual appearance puts people at ease."
-        - attribute: "authority"
-          value: -1
-          description: "Less intimidating than professional attire."
-      set_id: "casual_wear"
-    - id: "detective_coat"
-      name: "Weathered Trench Coat"
-      description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
-      categories: ["WEARABLE"]
-      slot: "TORSO"
-      weight: 2.0
-      style_rating: 8
-      effects:
-        - attribute: "composure"
-          value: 2
-          description: "The coat's weight provides a grounding presence."
-        - attribute: "authority"
-          value: 1
-          description: "A classic symbol of detective work."
-        - attribute: "endurance"
-          value: -1
-          description: "The heavy coat can be tiring to wear."
-      set_id: "detective_suit"
-      hidden_lore: "This coat was a gift from your mentor, Chief Detective Henderson, when you made detective. He wore it for 15 years and solved the infamous Harborside Strangler case while wearing it."
-      hidden_clues: 
-        - "Several of the inner pockets have been modified to be hidden or waterproof."
-        - "There's a small bloodstain on the inside lining that's not yours."
-      hidden_usage: "The coat's many hidden pockets could be used to conceal small evidence or tools that you don't want others to know you're carrying."
-      perception_difficulty: 12
-      wisdom_difficulty: 10
+    - "police_badge"
+    - "notebook"
+    - "pen"
+    - "flashlight"
+    - "evidence_bag"
+    - "coffee"
+    - "casual_pants"
+    - "sneakers"
+    - "worn_jacket"
+    - "detective_coat"
 
 # Character Archetypes Configuration
 character_archetypes:
@@ -237,6 +106,100 @@ item_sets:
 
 # Items Configuration
 items:
+  # Basic Equipment
+  police_badge:
+    id: "police_badge"
+    name: "Police Badge"
+    description: "Your official police badge. It's seen better days but still commands respect."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.1
+    style_rating: 5
+    effects:
+      - attribute: "authority"
+        value: 2
+        description: "A symbol of your position and authority."
+    hidden_lore: "Badge number 738 - the same number worn by the legendary Captain Morris who cleaned up the Department in the 70s. Some officers believe it's a lucky number."
+    hidden_clues:
+      - "There's a small dent on the back from when it stopped a knife during your first year on the force."
+    perception_difficulty: 8
+    wisdom_difficulty: 12
+
+  notebook:
+    id: "notebook"
+    name: "Detective's Notebook"
+    description: "A well-worn notebook filled with case notes and observations."
+    categories: ["TOOL"]
+    weight: 0.3
+    effects:
+      - attribute: "logic"
+        value: 1
+        description: "Helps organize your thoughts and observations."
+
+  pen:
+    id: "pen"
+    name: "Reliable Pen"
+    description: "A sturdy pen that's never run out of ink when you needed it most."
+    categories: ["TOOL"]
+    weight: 0.05
+    effects:
+      - attribute: "perception"
+        value: 1
+        description: "Helps you focus on details when taking notes."
+
+  flashlight:
+    id: "flashlight"
+    name: "Police Flashlight"
+    description: "A heavy-duty flashlight with a strong beam. Perfect for dark corners and night work."
+    categories: ["TOOL"] 
+    weight: 0.5
+    effects:
+      - attribute: "perception"
+        value: 2
+        description: "Illuminates dark areas and helps spot details."
+
+  evidence_bag:
+    id: "evidence_bag"
+    name: "Evidence Collection Kit"
+    description: "A professional kit for collecting and organizing evidence."
+    categories: ["CONTAINER"]
+    weight: 1.0
+    capacity: 5.0
+    allowed_categories: ["EVIDENCE"]
+    hidden_clues:
+      - "There's a Department stamp showing this kit was issued over 5 years ago, though all the supplies look new."
+      - "The fingerprint powder appears to be a newer formula than what is standard issue."
+    hidden_usage: "You can use the specialized bags to collect trace evidence that would be missed with standard collection techniques."
+    perception_difficulty: 10
+    wisdom_difficulty: 8
+
+  detective_coat:
+    id: "detective_coat"
+    name: "Weathered Trench Coat"
+    description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 2.0
+    style_rating: 8
+    effects:
+      - attribute: "composure"
+        value: 2
+        description: "The coat's weight provides a grounding presence."
+      - attribute: "authority"
+        value: 1
+        description: "A classic symbol of detective work."
+      - attribute: "endurance"
+        value: -1
+        description: "The heavy coat can be tiring to wear."
+    set_id: "detective_suit"
+    hidden_lore: "This coat was a gift from your mentor, Chief Detective Henderson, when you made detective. He wore it for 15 years and solved the infamous Harborside Strangler case while wearing it."
+    hidden_clues: 
+      - "Several of the inner pockets have been modified to be hidden or waterproof."
+      - "There's a small bloodstain on the inside lining that's not yours."
+    hidden_usage: "The coat's many hidden pockets could be used to conceal small evidence or tools that you don't want others to know you're carrying."
+    perception_difficulty: 12
+    wisdom_difficulty: 10
+
   # Wearables - Detective Set
   detective_hat:
     id: "detective_hat"

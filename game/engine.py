@@ -72,10 +72,16 @@ class GameEngine:
             
         # Give starting inventory items if defined in config
         if hasattr(self.config.game_settings, 'starting_inventory'):
-            for item_def in self.config.game_settings.starting_inventory:
-                item_id = item_def.get('id')
-                if item_id and item_id in self.config.items:
-                    self.game_state.add_item(self.config.items[item_id])
+            for item_id in self.config.game_settings.starting_inventory:
+                if isinstance(item_id, dict):
+                    # Handle old format (dict with item properties)
+                    item_id_value = item_id.get('id')
+                    if item_id_value and item_id_value in self.config.items:
+                        self.game_state.add_item(self.config.items[item_id_value])
+                elif isinstance(item_id, str):
+                    # Handle new format (string item IDs)
+                    if item_id in self.config.items:
+                        self.game_state.add_item(self.config.items[item_id])
 
     def start_character_creation(self) -> None:
         """Start the character creation process."""
