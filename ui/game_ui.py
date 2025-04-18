@@ -282,8 +282,13 @@ class GameUI(App):
 
     def on_key(self, event) -> None:
         """Handle key events."""
-        # If in dialogue mode and input is focused, handle arrow keys and enter
+        # If in dialogue mode and input is focused, handle keys
         if self.dialogue_mode.is_active and self.game_input.has_focus:
+            # First check if the dialogue mode itself wants to handle this key
+            if self.dialogue_mode.handle_key(event):
+                return
+                
+            # Handle other dialogue-specific keys
             if event.key == "up":
                 event.prevent_default()
                 self.action_select_previous()

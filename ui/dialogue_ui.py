@@ -3,6 +3,8 @@ Dialogue UI module for handling NPC conversations.
 """
 
 from typing import List, Optional, Tuple
+import asyncio
+import time
 
 from textual import events
 from textual.containers import Container, ScrollableContainer
@@ -26,6 +28,15 @@ class DialogueMode:
         self.is_active = False
         self.current_dialogue_buffer = []  # Buffer for current dialogue state
         self.stored_game_history = []  # Buffer for storing game history during dialogue
+        
+        # Typewriter effect properties
+        self.typewriter_speed = 0.02  # Seconds per character
+        self.is_typing = False
+        self.reveal_all_text = False
+        self.current_typing_task = None
+        self.full_dialogue_buffer = []  # Complete dialogue buffer before typewriter effect
+        self.latest_responses = []  # Track the most recent responses for typewriter effect
+        self.previously_shown_lines = 0  # Count of lines already shown
 
     def start_dialogue(self, npc_name: str, responses: List[DialogueResponse]) -> None:
         """Start a dialogue with an NPC."""
@@ -37,6 +48,11 @@ class DialogueMode:
         self.selected_index = 0
         self.dialogue_history = []
         self.current_dialogue_buffer = []  # Clear buffer
+        self.full_dialogue_buffer = []  # Clear full dialogue buffer
+        self.is_typing = False
+        self.reveal_all_text = False
+        self.latest_responses = []
+        self.previously_shown_lines = 0
         self.process_responses(responses)
         self.update_display()
         # Set focus to the input box
@@ -45,6 +61,9 @@ class DialogueMode:
     def end_dialogue(self) -> None:
         """End the current dialogue."""
         if self.is_active:
+            # Cancel any active typing task
+            self.cancel_typing_effect()
+            
             # Add conversation end marker to buffer
             self.current_dialogue_buffer.append("\n=== Conversation ended ===\n")
             
@@ -64,7 +83,10 @@ class DialogueMode:
             self.options = []
             self.dialogue_history = []
             self.current_dialogue_buffer = []
+            self.full_dialogue_buffer = []
             self.stored_game_history = []
+            self.is_typing = False
+            self.reveal_all_text = False
             self.game_ui.game_input.placeholder = "Enter your command..."
             # Keep focus on the input box
             self.game_ui.game_input.focus()
@@ -72,12 +94,14 @@ class DialogueMode:
     def process_responses(self, responses: List[DialogueResponse]) -> None:
         """Process a list of dialogue responses."""
         new_options = []
+        new_responses = []  # Track new responses for typewriter effect
 
         for response in responses:
             if isinstance(response, DialogueResponse.Options):
                 new_options = response.options
             else:
                 self.add_to_history(response)
+                new_responses.append(response)  # Track this as a new response
 
         # Update options if new ones were provided
         if new_options:
@@ -86,7 +110,10 @@ class DialogueMode:
         else:
             # No options means conversation should end
             self.end_dialogue()
-
+            
+        # Store the latest response for typewriter effect if any
+        self.latest_responses = new_responses
+        
     def add_to_history(self, response: DialogueResponse) -> None:
         """Add a dialogue response to the history."""
         if isinstance(response, DialogueResponse.Speech):
@@ -134,21 +161,142 @@ class DialogueMode:
         ))
         
         return selected_option.id
+    
+    def reveal_all(self) -> None:
+        """Immediately reveal all text, stopping any typewriter effect in progress."""
+        if not self.is_active or not self.is_typing:
+            return
+            
+        self.reveal_all_text = True
+        # Cancel the current typing task
+        self.cancel_typing_effect()
+        
+        # Show all text at once
+        self.game_ui.game_output.clear()
+        self.current_dialogue_buffer = []
+        for line in self.full_dialogue_buffer:
+            self.game_ui.game_output.write(line)
+            self.current_dialogue_buffer.append(line)
+        
+        self.is_typing = False
+        
+        # Keep focus on the input box
+        self.game_ui.game_input.focus()
+    
+    def cancel_typing_effect(self) -> None:
+        """Cancel any ongoing typing effect."""
+        if self.current_typing_task and not self.current_typing_task.done():
+            self.current_typing_task.cancel()
+            self.current_typing_task = None
+    
+    async def typewriter_effect(self, lines: List[str], start_pos: int = 0) -> None:
+        """Apply a typewriter effect to gradually reveal dialogue text.
+        
+        Args:
+            lines: List of new lines to display with typewriter effect
+            start_pos: Position in the full buffer where these lines start
+        """
+        self.is_typing = True
+        self.reveal_all_text = False
+        
+        try:
+            for line_index, line in enumerate(lines):
+                # Skip empty lines or add them immediately
+                if not line.strip():
+                    self.game_ui.game_output.write(line)
+                    self.current_dialogue_buffer.append(line)
+                    continue
+                
+                # For section headers like "=== Conversation with", display immediately
+                if "=== Conversation with" in line:
+                    self.game_ui.game_output.write(line)
+                    self.current_dialogue_buffer.append(line)
+                    continue
+                
+                # For dialogue like "Skill Check -", display immediately
+                if "Skill Check -" in line:
+                    self.game_ui.game_output.write(line)
+                    self.current_dialogue_buffer.append(line)
+                    continue
+                
+                # For section headers like "Options:", display immediately
+                if line == "\nOptions:":
+                    self.game_ui.game_output.write(line)
+                    self.current_dialogue_buffer.append(line)
+                    continue
+                
+                # For dialogue options (lines starting with ">" or "  "), display immediately
+                if line.startswith(">") or (line.startswith("  ") and "\nOptions:" in self.current_dialogue_buffer):
+                    self.game_ui.game_output.write(line)
+                    self.current_dialogue_buffer.append(line)
+                    continue
+                
+                # Apply typewriter effect to dialogue lines
+                current_line = ""
+                for char in line:
+                    if self.reveal_all_text:
+                        # If user requested to reveal all text, break out
+                        break
+                    
+                    current_line += char
+                    
+                    # Create a temporary buffer with current state
+                    temp_buffer = self.current_dialogue_buffer.copy()
+                    
+                    # Add the current in-progress line
+                    if line_index + start_pos < len(temp_buffer):
+                        temp_buffer[line_index + start_pos] = current_line
+                    else:
+                        temp_buffer.append(current_line)
+                    
+                    # Clear and redisplay with updated line
+                    self.game_ui.game_output.clear()
+                    for buffer_line in temp_buffer:
+                        self.game_ui.game_output.write(buffer_line)
+                    
+                    # Adding a delay between characters for the typewriter effect
+                    await asyncio.sleep(self.typewriter_speed)
+                
+                # If we broke out of the loop, we still need to ensure the full line is displayed
+                if self.reveal_all_text:
+                    break
+                
+                # Update the current buffer with the complete line
+                if line_index + start_pos < len(self.current_dialogue_buffer):
+                    self.current_dialogue_buffer[line_index + start_pos] = line
+                else:
+                    self.current_dialogue_buffer.append(line)
+            
+            # If reveal_all_text was triggered, show all text at once
+            if self.reveal_all_text:
+                self.game_ui.game_output.clear()
+                self.current_dialogue_buffer = []
+                for full_line in self.full_dialogue_buffer:
+                    self.game_ui.game_output.write(full_line)
+                    self.current_dialogue_buffer.append(full_line)
+            
+        except asyncio.CancelledError:
+            # Task was cancelled, likely by reveal_all()
+            pass
+        finally:
+            self.is_typing = False
+            # Make sure the input has focus
+            self.game_ui.game_input.focus()
 
     def update_display(self) -> None:
         """Update the game UI to show current dialogue state."""
         if not self.is_active:
             return
 
-        # Clear the game output
-        self.game_ui.game_output.clear()
+        # Cancel any ongoing typing effect
+        self.cancel_typing_effect()
 
         # Update input placeholder to show current selection
         if self.options:
             selected_text = self.options[self.selected_index].text
-            self.game_ui.game_input.placeholder = f"Selected: {selected_text} (↑/↓ to change, Enter to select)"
+            self.game_ui.game_input.placeholder = f"Selected: {selected_text} (↑/↓ to change, Enter to select, Space to skip)"
         else:
-            self.game_ui.game_input.placeholder = "No options available"
+            self.game_ui.game_input.placeholder = "No options available (Space to skip text)"
 
         # Build the current dialogue state
         output = []
@@ -192,12 +340,49 @@ class DialogueMode:
                 wrapped_option.append(f"{prefix}{line}")
                 output.extend(wrapped_option)
         
-        # Update the buffer with current state
-        self.current_dialogue_buffer = output
+        # Store the full buffer before typewriter effect
+        self.full_dialogue_buffer = output.copy()
         
-        # Write the formatted output one line at a time
-        for line in output:
-            self.game_ui.game_output.write(line)
+        # Clear the game output and the current buffer
+        self.game_ui.game_output.clear()
+        self.current_dialogue_buffer = []
+        
+        # Check if we have new responses to apply the typewriter effect to
+        if self.latest_responses and any(isinstance(r, DialogueResponse.Speech) and r.speaker != "You" for r in self.latest_responses):
+            # Display all previously shown content instantly
+            prev_content = output[:self.previously_shown_lines] if self.previously_shown_lines < len(output) else output[:]
+            for line in prev_content:
+                self.game_ui.game_output.write(line)
+                self.current_dialogue_buffer.append(line)
             
-        # Add a final newline for spacing
-        self.game_ui.game_output.write("")
+            # Only apply typewriter effect to new content
+            new_content = output[self.previously_shown_lines:] if self.previously_shown_lines < len(output) else []
+            if new_content:
+                self.current_typing_task = asyncio.create_task(self.typewriter_effect(new_content, len(self.current_dialogue_buffer)))
+        else:
+            # No new NPC responses, just display everything immediately
+            for line in output:
+                self.game_ui.game_output.write(line)
+                self.current_dialogue_buffer.append(line)
+        
+        # Update the count of shown lines for next time
+        self.previously_shown_lines = len(output)
+        
+        # Clear latest responses after processing
+        self.latest_responses = []
+
+    def handle_key(self, event) -> bool:
+        """Handle key events specific to dialogue mode.
+        
+        Returns True if the key was handled, False otherwise.
+        """
+        if not self.is_active:
+            return False
+            
+        # Space to reveal all text or skip typing effect
+        if event.key == " ":
+            if self.is_typing:
+                self.reveal_all()
+                return True
+                
+        return False
