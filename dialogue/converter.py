@@ -111,6 +111,68 @@ def convert_dialogue_trees(config):
 
             options.append(option)
 
+        # Convert node conditions if present
+        node_conditions = DialogueConditions()
+        conditions_data = getattr(config_node, "conditions", {}) or {}
+        
+        if conditions_data:
+            # Process required items
+            node_conditions.required_items = conditions_data.get("required_items", [])
+            
+            # Process required clues
+            node_conditions.required_clues = conditions_data.get("required_clues", [])
+            
+            # Process required quests
+            node_conditions.required_quests = conditions_data.get("required_quests", {})
+            
+            # Process required skills
+            node_conditions.required_skills = conditions_data.get("required_skills", {})
+            
+            # Process required thoughts
+            node_conditions.required_thoughts = conditions_data.get("required_thoughts", [])
+            
+            # Process required emotional state
+            node_conditions.required_emotional_state = conditions_data.get("required_emotional_state")
+            
+            # Process time of day
+            node_conditions.time_of_day = conditions_data.get("time_of_day")
+            
+            # Process quest stage active
+            if "quest_stage_active" in conditions_data:
+                quest_id = conditions_data["quest_stage_active"].get("quest_id")
+                stage_id = conditions_data["quest_stage_active"].get("stage_id")
+                if quest_id and stage_id:
+                    node_conditions.quest_stage_active = (quest_id, stage_id)
+            
+            # Process quest objective completed
+            if "quest_objective_completed" in conditions_data:
+                quest_id = conditions_data["quest_objective_completed"].get("quest_id")
+                objective_id = conditions_data["quest_objective_completed"].get("objective_id")
+                if quest_id and objective_id:
+                    node_conditions.quest_objective_completed = (quest_id, objective_id)
+            
+            # Process quest branch taken
+            if "quest_branch_taken" in conditions_data:
+                quest_id = conditions_data["quest_branch_taken"].get("quest_id")
+                branch_id = conditions_data["quest_branch_taken"].get("branch_id")
+                if quest_id and branch_id:
+                    node_conditions.quest_branch_taken = (quest_id, branch_id)
+                    
+            # Process NPC relationship value
+            if "npc_relationship_value" in conditions_data:
+                node_conditions.npc_relationship_value = conditions_data["npc_relationship_value"]
+
+        # Convert effects if present
+        effects = []
+        for effect_data in getattr(config_node, "effects", []) or []:
+            if isinstance(effect_data, dict):
+                effects.append(
+                    DialogueEffect(
+                        effect_type=effect_data.get("effect_type", ""),
+                        data=effect_data.get("data"),
+                    )
+                )
+
         # Create internal node with full conversion
         internal_node = DialogueNode(
             id=node_id,
@@ -119,8 +181,8 @@ def convert_dialogue_trees(config):
             emotional_state=getattr(config_node, "emotional_state", "Neutral"),
             inner_voice_comments=inner_voice_comments,
             options=options,
-            conditions=DialogueConditions(),
-            effects=[],  # Add effects conversion if needed
+            conditions=node_conditions,
+            effects=effects, 
         )
 
         internal_trees[node_id] = internal_node

@@ -85,8 +85,149 @@ class DialogueManager:
         return responses
 
     def _determine_entry_point(self, npc_id: str, game_state: GameState) -> str:
-        """Determine the appropriate dialogue entry point."""
-        return f"{npc_id}_default"
+        """
+        Determine the appropriate dialogue entry point based on game state.
+        
+        This checks conditions such as:
+        - Whether specific quests are in progress or completed
+        - Whether the player has certain items
+        - Whether specific clues have been discovered
+        - The current relationship value with the NPC
+        - Time of day or other game state flags
+        
+        Returns the node ID to start the dialogue from.
+        """
+        # Get all dialogue nodes for this NPC
+        npc_nodes = {
+            key: node for key, node in self.dialogue_tree.items() 
+            if node.speaker == npc_id and key.startswith(f"{npc_id}_")
+        }
+        
+        # Filter for entry point nodes (those with conditions)
+        entry_nodes = []
+        
+        for node_id, node in npc_nodes.items():
+            # Check if this is a potential entry node (has conditions and is not part of an ongoing conversation)
+            if hasattr(node, 'conditions') and node.conditions:
+                entry_nodes.append((node_id, node))
+        
+        # Sort entry nodes by specificity (more conditions = more specific)
+        def count_conditions(node):
+            conditions = node.conditions
+            count = 0
+            count += len(conditions.required_items)
+            count += len(conditions.required_clues)
+            count += len(conditions.required_quests)
+            count += len(conditions.required_skills)
+            count += len(conditions.required_thoughts)
+            count += 1 if conditions.required_emotional_state else 0
+            count += 1 if conditions.time_of_day else 0
+            count += 1 if conditions.quest_stage_active else 0
+            count += 1 if conditions.quest_objective_completed else 0
+            count += 1 if conditions.quest_branch_taken else 0
+            return count
+        
+        # Sort nodes by condition count (highest first)
+        entry_nodes.sort(key=lambda x: count_conditions(x[1]), reverse=True)
+        
+        # Check each entry node in order of specificity
+        for node_id, node in entry_nodes:
+            if self._check_dialogue_conditions(node.conditions, game_state):
+                return node_id
+        
+        # If no conditional entry points match or none exist, fall back to default
+        default_node_id = f"{npc_id}_default"
+        
+        # If there's no default node, use the first available node for this NPC
+        if default_node_id not in self.dialogue_tree and npc_nodes:
+            return next(iter(npc_nodes.keys()))
+            
+        return default_node_id
+        
+    def _check_dialogue_conditions(self, conditions: DialogueConditions, game_state: GameState) -> bool:
+        """Check if dialogue conditions are met based on game state."""
+        # Check required items
+        if conditions.required_items:
+            has_items = all(
+                any(item.id == item_id for item in game_state.inventory_manager.items)
+                for item_id in conditions.required_items
+            )
+            if not has_items:
+                return False
+
+        # Check required clues
+        if conditions.required_clues:
+            has_clues = all(
+                any(clue.id == clue_id for clue in game_state.discovered_clues)
+                for clue_id in conditions.required_clues
+            )
+            if not has_clues:
+                return False
+
+        # Check required quests
+        if conditions.required_quests:
+            quest_status_ok = all(
+                game_state.quest_log.get(quest_id) == status
+                for quest_id, status in conditions.required_quests.items()
+            )
+            if not quest_status_ok:
+                return False
+                
+        # Check required skills
+        if conditions.required_skills:
+            skills_ok = all(
+                getattr(game_state.player.skills, skill_name, 0) >= value
+                for skill_name, value in conditions.required_skills.items()
+            )
+            if not skills_ok:
+                return False
+                
+        # Check quest stage active
+        if conditions.quest_stage_active:
+            quest_id, stage_id = conditions.quest_stage_active
+            quest = game_state.get_quest(quest_id)
+            if not quest or not game_state.is_quest_stage_active(quest_id, stage_id):
+                return False
+                
+        # Check quest objective completed
+        if conditions.quest_objective_completed:
+            quest_id, objective_id = conditions.quest_objective_completed
+            if not game_state.is_objective_completed(quest_id, objective_id):
+                return False
+                
+        # Check quest branch taken
+        if conditions.quest_branch_taken:
+            quest_id, branch_id = conditions.quest_branch_taken
+            if quest_id not in game_state.taken_quest_branches or branch_id not in game_state.taken_quest_branches.get(quest_id, set()):
+                return False
+                
+        # Check time of day
+        if conditions.time_of_day and game_state.time_of_day not in conditions.time_of_day:
+            return False
+            
+        # Check emotional state if required
+        if conditions.required_emotional_state:
+            # For now, we'll use the emotional state in the relationship data
+            # This could be expanded to a more complex emotion system
+            if npc_id := conditions.required_emotional_state.split(':')[0]:
+                emotional_state = conditions.required_emotional_state.split(':')[1]
+                current_state = game_state.get_npc_emotional_state(npc_id)
+                if current_state != emotional_state:
+                    return False
+        
+        # Check NPC relationship value if specified
+        if hasattr(conditions, 'npc_relationship_value') and conditions.npc_relationship_value:
+            relationship_data = conditions.npc_relationship_value
+            if isinstance(relationship_data, dict):
+                npc_id = relationship_data.get('npc_id')
+                min_value = relationship_data.get('min_value')
+                if npc_id and min_value is not None:
+                    current_value = game_state.get_relationship_value(npc_id)
+                    if current_value < min_value:
+                        return False
+        
+        # All conditions passed
+        return True
 
     def process_node(
         self, node_id: str, game_state: GameState

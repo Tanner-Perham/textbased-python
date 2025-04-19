@@ -20,6 +20,7 @@ class DialogueConditions:
     quest_stage_active: Optional[tuple] = None  # (quest_id, stage_id)
     quest_objective_completed: Optional[tuple] = None  # (quest_id, objective_id)
     quest_branch_taken: Optional[tuple] = None  # (quest_id, branch_id)
+    npc_relationship_value: Optional[Dict[str, Any]] = field(default_factory=dict)  # {'npc_id': 'id', 'min_value': int}
 
 
 @dataclass

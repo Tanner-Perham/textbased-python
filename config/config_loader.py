@@ -67,6 +67,8 @@ class DialogueNode:
     emotional_state: str
     inner_voice_comments: List[Dict[str, Any]] = field(default_factory=list)
     options: List[Dict[str, Any]] = field(default_factory=list)
+    conditions: Dict[str, Any] = field(default_factory=dict)
+    effects: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
