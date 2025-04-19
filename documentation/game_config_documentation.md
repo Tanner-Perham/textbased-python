@@ -207,6 +207,15 @@ dialogue_trees:
         conditions:
           required_items: ["police_badge"]
         next_node: "martinez_cooperative"
+        consequences:
+          - effect_type: "quest"
+            data:
+              action: "start"
+              quest_id: "investigate_warehouse"
+          - effect_type: "item"
+            data:
+              action: "add"
+              item_id: "warehouse_key"
 ```
 
 Key components:
@@ -223,6 +232,127 @@ Key components:
   - **conditions**: Requirements to see or use this option
   - **next_node**: Next dialogue node ID if selected
   - **success_node/failure_node**: Alternative paths based on skill check
+  - **consequences**: Effects triggered when this option is selected
+
+### Dialogue Conditions
+The dialogue system supports various condition types that determine when dialogue options are available:
+
+```yaml
+conditions:
+  required_items: ["police_badge", "warrant"]  # Items player must possess
+  required_clues: ["fingerprint_match", "witness_testimony"]  # Clues player must have discovered
+  required_quests:  # Quests that must be in specific states
+    main_investigation: "InProgress"
+    warehouse_security: "Completed"
+  required_skills:  # Minimum skill levels needed
+    authority: 8
+    persuasion: 5
+  required_thoughts: ["suspect_motive", "connection_theory"]  # Thoughts player must have developed
+  required_emotional_state: "Friendly"  # NPC's required emotional state
+  time_of_day: ["Morning", "Afternoon"]  # Times when option is available
+  quest_stage_active: ["main_investigation", "interview_phase"]  # Active quest stage (quest_id, stage_id)
+  quest_objective_completed: ["main_investigation", "find_evidence"]  # Completed objective (quest_id, objective_id)
+  quest_branch_taken: ["main_investigation", "suspect_chen"]  # Quest branch player has taken (quest_id, branch_id)
+```
+
+Key condition types:
+- **required_items**: List of item IDs that the player must have in their inventory to see or select this option
+- **required_clues**: List of clue IDs that the player must have discovered during the investigation
+- **required_quests**: Dictionary mapping quest IDs to their required status values (NotStarted, InProgress, Completed, Failed)
+- **required_skills**: Dictionary mapping skill names to minimum required values that the player must possess
+- **required_thoughts**: List of thought IDs the player must have developed through previous interactions
+- **required_emotional_state**: The emotional state the NPC must be in for this option to be available
+- **time_of_day**: List of specific times when the dialogue option is available (Morning, Afternoon, Evening, Night)
+- **quest_stage_active**: Tuple specifying a quest stage (quest_id, stage_id) that must be currently active
+- **quest_objective_completed**: Tuple specifying a quest objective (quest_id, objective_id) that must be completed
+- **quest_branch_taken**: Tuple specifying a quest branch (quest_id, branch_id) that the player must have chosen
+
+### Dialogue Consequences
+The dialogue system supports a variety of consequence types that can be triggered when a dialogue option is selected:
+
+#### Quest Effects
+```yaml
+effect_type: "quest"
+data:
+  action: "add" | "start" | "advance" | "complete_objective" | "fail" | "unlock_branch"
+  quest_id: "quest_identifier"
+  stage_id: "stage_identifier"  # For "advance" action
+  objective_id: "objective_identifier"  # For "complete_objective" action
+  branch_id: "branch_identifier"  # For "unlock_branch" action
+```
+
+#### Relationship Effects
+```yaml
+effect_type: "relationship"
+data:
+  npc_id: "npc_identifier"
+  value: 10  # Positive or negative integer value that modifies the relationship
+```
+
+#### Item Effects
+```yaml
+effect_type: "item"
+data:
+  action: "add" | "remove"
+  item_id: "item_identifier"
+```
+
+#### Skill Effects
+```yaml
+effect_type: "skill"
+data:
+  skill_name: "perception"  # Name of the skill to modify
+  amount: 1  # Positive or negative integer value
+```
+
+#### Stat Effects
+```yaml
+effect_type: "stat"
+data:
+  stat_name: "health"  # Name of the stat to modify
+  amount: -5  # Positive or negative integer value
+```
+
+#### Flag Effects
+```yaml
+effect_type: "flag"
+data:
+  flag_name: "knows_secret"  # Name of the game flag
+  value: true  # Boolean or other value
+```
+
+#### Notification Effects
+```yaml
+effect_type: "notification"
+data:
+  text: "You've gained a new clue!"
+  type: "info" | "warning" | "error" | "success"
+```
+
+#### Scene Effects
+```yaml
+effect_type: "scene"
+data:
+  action: "change_location" | "change_scene"
+  location_id: "warehouse_office"  # For "change_location" action
+  scene_id: "investigation_scene"  # For "change_scene" action
+```
+
+#### Combat Effects
+```yaml
+effect_type: "combat"
+data:
+  action: "start" | "end"
+  enemy_id: "guard_enemy"  # For "start" action
+```
+
+#### Custom Effects
+```yaml
+effect_type: "custom"
+data:
+  # Custom data structure determined by the game engine
+  # This allows for game-specific effects not covered by other types
+```
 
 ## Quests
 The `quests` section defines objectives and storylines for the player to complete:
@@ -263,7 +393,7 @@ Key components:
 - **importance**: Priority level (Critical, Optional, etc.)
 - **is_main_quest**: Boolean indicating if it's part of the main storyline
 - **is_hidden**: Boolean indicating if it should be hidden until discovered
-- **status**: Current quest state (NotStarted, InProgress, Completed)
+- **status**: Current quest state (NotStarted, InProgress, Completed, Failed)
 - **stages**: Sequential phases of the quest
   - **id**: Stage identifier
   - **title**: Stage name
