@@ -332,7 +332,10 @@ class DialogueManager:
         default_next_node = option.next_node
         success_node = option.success_node
         failure_node = option.failure_node
+        critical_success_node = option.critical_success_node
+        critical_failure_node = option.critical_failure_node
         skill_check_success = False
+        critical_result = None
 
         if option.skill_check:
             skill_check_response = self._process_skill_check(
@@ -342,8 +345,9 @@ class DialogueManager:
 
             if isinstance(skill_check_response, DialogueResponse.SkillCheck):
                 skill_check_success = skill_check_response.success
+                critical_result = skill_check_response.critical_result
         print(f"DialogueManager: Option {option}")
-        print(f"DialogueManager: Skill check success {skill_check_success}")
+        print(f"DialogueManager: Skill check success {skill_check_success}, Critical result {critical_result}")
         self._apply_emotional_changes(option.emotional_impact)
 
         print(f"DialogueManager: Processing effects {option.consequences}")
@@ -361,7 +365,11 @@ class DialogueManager:
 
         next_node = ""
         if option.skill_check:
-            if skill_check_success and success_node:
+            if critical_result == "success" and critical_success_node:
+                next_node = critical_success_node
+            elif critical_result == "failure" and critical_failure_node:
+                next_node = critical_failure_node
+            elif skill_check_success and success_node:
                 next_node = success_node
             elif not skill_check_success and failure_node:
                 next_node = failure_node
@@ -406,12 +414,28 @@ class DialogueManager:
                 )
                 player_skill += supporting_value
 
-        roll = random.randint(1, 20)
-
-        success = (roll + player_skill) >= difficulty
+        # Roll 2d6 instead of 1d20
+        dice_values = [random.randint(1, 6), random.randint(1, 6)]
+        roll = sum(dice_values)
+        
+        # Check for critical success or failure
+        critical_result = None
+        if dice_values[0] == 6 and dice_values[1] == 6:
+            critical_result = "success"
+            success = True  # Critical success always succeeds
+        elif dice_values[0] == 1 and dice_values[1] == 1:
+            critical_result = "failure"
+            success = False  # Critical failure always fails
+        else:
+            success = (roll + player_skill) >= difficulty
 
         return DialogueResponse.SkillCheck(
-            success=success, skill=check.primary_skill, roll=roll, difficulty=difficulty
+            success=success,
+            skill=check.primary_skill,
+            roll=roll,
+            difficulty=difficulty,
+            dice_values=dice_values,
+            critical_result=critical_result
         )
 
     def _apply_emotional_changes(self, changes: Dict[str, int]) -> None:

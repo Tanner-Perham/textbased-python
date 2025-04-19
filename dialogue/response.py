@@ -2,7 +2,7 @@
 Module for dialogue response data types.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List, Optional, Union
 
@@ -41,6 +41,8 @@ class DialogueResponse:
         skill: str
         roll: int
         difficulty: int
+        dice_values: List[int] = field(default_factory=list)  # The individual dice values (2d6)
+        critical_result: Optional[str] = None  # 'success', 'failure', or None for regular result
 
     @classmethod
     def from_dict(
@@ -75,6 +77,8 @@ class DialogueResponse:
                     inner_voice_reactions=opt_data.get("inner_voice_reactions", []),
                     success_node=opt_data.get("success_node", ""),
                     failure_node=opt_data.get("failure_node", ""),
+                    critical_success_node=opt_data.get("critical_success_node", ""),
+                    critical_failure_node=opt_data.get("critical_failure_node", ""),
                 )
                 options.append(option)
 
@@ -86,6 +90,8 @@ class DialogueResponse:
                 skill=data.get("skill", ""),
                 roll=data.get("roll", 0),
                 difficulty=data.get("difficulty", 0),
+                dice_values=data.get("dice_values", []),
+                critical_result=data.get("critical_result"),
             )
 
         # Default to empty speech if type is unknown

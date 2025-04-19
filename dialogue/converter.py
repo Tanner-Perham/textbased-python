@@ -104,6 +104,8 @@ def convert_dialogue_trees(config):
                     inner_voice_reactions=inner_voice_reactions,
                     success_node=opt.get("success_node", ""),
                     failure_node=opt.get("failure_node", ""),
+                    critical_success_node=opt.get("critical_success_node", ""),
+                    critical_failure_node=opt.get("critical_failure_node", ""),
                 )
             else:
                 # If it's already a DialogueOption object

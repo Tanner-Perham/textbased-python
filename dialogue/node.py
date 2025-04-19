@@ -69,6 +69,8 @@ class DialogueOption:
     inner_voice_reactions: List[InnerVoiceComment] = field(default_factory=list)
     success_node: str = ""  # Node to go to on successful skill check
     failure_node: str = ""  # Node to go to on failed skill check
+    critical_success_node: str = ""  # Node to go to on critical success (double 6)
+    critical_failure_node: str = ""  # Node to go to on critical failure (double 1)
 
 
 @dataclass

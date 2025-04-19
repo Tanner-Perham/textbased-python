@@ -120,8 +120,9 @@ def test_process_skill_check_success(mock_randint, setup_manager):
     """Test processing a skill check that succeeds."""
     manager, game_state, _ = setup_manager
     
-    # Mock the random roll to be high (20) for guaranteed success
-    mock_randint.return_value = 20
+    # Mock the random roll to be high for guaranteed success
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [5, 5]  # Total 10 (high roll)
     
     # Configure game state with player skills
     game_state.player.skills = {"perception": 2}
@@ -139,18 +140,21 @@ def test_process_skill_check_success(mock_randint, setup_manager):
     
     # Assertions
     assert isinstance(result, DialogueResponse.SkillCheck)
-    assert result.success is True
+    assert result.success is True  # 10 (roll) + 2 (skill) = 12, which is >= 10
     assert result.skill == "perception"
-    assert result.roll == 20
+    assert result.roll == 10
+    assert result.dice_values == [5, 5]
     assert result.difficulty == 10
+    assert result.critical_result is None  # Not a critical result
 
 @patch('random.randint')
 def test_process_skill_check_failure(mock_randint, setup_manager):
     """Test processing a skill check that fails."""
     manager, game_state, _ = setup_manager
     
-    # Mock the random roll to be low (1) for guaranteed failure
-    mock_randint.return_value = 1
+    # Mock the random roll to be low for guaranteed failure
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [2, 2]  # Total 4 (low roll, but not critical)
     
     # Configure game state with player skills
     game_state.player.skills = {"logic": 3}
@@ -168,10 +172,12 @@ def test_process_skill_check_failure(mock_randint, setup_manager):
     
     # Assertions
     assert isinstance(result, DialogueResponse.SkillCheck)
-    assert result.success is False
+    assert result.success is False  # 4 (roll) + 3 (skill) = 7, which is < 15
     assert result.skill == "logic"
-    assert result.roll == 1
+    assert result.roll == 4
+    assert result.dice_values == [2, 2]
     assert result.difficulty == 15
+    assert result.critical_result is None  # Not a critical result
 
 @patch('random.randint')
 def test_process_skill_check_with_supporting_skills(mock_randint, setup_manager):
@@ -179,7 +185,8 @@ def test_process_skill_check_with_supporting_skills(mock_randint, setup_manager)
     manager, game_state, _ = setup_manager
     
     # Mock the random roll
-    mock_randint.return_value = 10
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [3, 3]  # Total 6
     
     # Configure game state with player skills
     game_state.player.skills = {
@@ -190,7 +197,7 @@ def test_process_skill_check_with_supporting_skills(mock_randint, setup_manager)
     
     # Create a skill check with supporting skills
     skill_check = EnhancedSkillCheck(
-        base_difficulty=18,
+        base_difficulty=12,
         primary_skill="empathy",
         supporting_skills=[("suggestion", 0.5), ("authority", 0.25)],
         emotional_modifiers={}
@@ -199,15 +206,16 @@ def test_process_skill_check_with_supporting_skills(mock_randint, setup_manager)
     # Process the skill check
     result = manager._process_skill_check(skill_check, game_state)
     
-    # Calculate expected total: roll(10) + empathy(3) + suggestion(4*0.5=2) + authority(2*0.25=0) = 15
-    expected_success = (10 + 3 + 2 + 0) >= 18
+    # Calculate expected total: roll(6) + empathy(3) + suggestion(4*0.5=2) + authority(2*0.25=0) = 11
+    expected_success = (6 + 3 + 2 + 0) >= 12
     
     # Assertions
     assert isinstance(result, DialogueResponse.SkillCheck)
     assert result.success is expected_success
     assert result.skill == "empathy"
-    assert result.roll == 10
-    assert result.difficulty == 18
+    assert result.roll == 6
+    assert result.dice_values == [3, 3]
+    assert result.difficulty == 12
 
 @patch('random.randint')
 def test_process_skill_check_with_emotional_modifiers(mock_randint, setup_manager):
@@ -219,14 +227,15 @@ def test_process_skill_check_with_emotional_modifiers(mock_randint, setup_manage
     manager.emotional_states = {"test_node": "Angry"}
     
     # Mock the random roll
-    mock_randint.return_value = 10
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [3, 3]  # Total 6
     
     # Configure game state with player skills
     game_state.player.skills = {"authority": 5}
     
     # Create a skill check with emotional modifiers
     skill_check = EnhancedSkillCheck(
-        base_difficulty=12,
+        base_difficulty=8,
         primary_skill="authority",
         supporting_skills=[],
         emotional_modifiers={"Angry": 3, "Happy": -2}  # Angry makes it harder
@@ -237,11 +246,12 @@ def test_process_skill_check_with_emotional_modifiers(mock_randint, setup_manage
     
     # Assertions
     assert isinstance(result, DialogueResponse.SkillCheck)
-    assert result.difficulty == 15  # 12 (base) + 3 (angry modifier)
+    assert result.difficulty == 11  # 8 (base) + 3 (angry modifier)
     assert result.skill == "authority"
-    assert result.roll == 10
+    assert result.roll == 6
+    assert result.dice_values == [3, 3]
     
-    # Roll(10) + skill(5) = 15, which equals the modified difficulty(15)
+    # Roll(6) + skill(5) = 11, which equals the modified difficulty(11)
     assert result.success is True
 
 def test_process_skill_check_missing_skill(setup_manager):
@@ -259,16 +269,17 @@ def test_process_skill_check_missing_skill(setup_manager):
         emotional_modifiers={}
     )
     
-    # Process the skill check with a fixed random seed for consistency
-    with patch('random.randint', return_value=10):
+    # Process the skill check with a fixed random dice rolls
+    with patch('random.randint', side_effect=[3, 3]):  # Total 6
         result = manager._process_skill_check(skill_check, game_state)
     
     # Assertions - should use 0 for the missing skill
     assert isinstance(result, DialogueResponse.SkillCheck)
     assert result.skill == "perception"
-    assert result.roll == 10
+    assert result.roll == 6
+    assert result.dice_values == [3, 3]
     assert result.difficulty == 10
-    assert result.success == (10 >= 10)  # Roll of 10 with no skill bonus equals difficulty
+    assert result.success is False  # Roll of 6 with no skill bonus is less than difficulty 10
 
 @patch('random.randint')
 def test_select_option_with_skill_check_success(mock_randint, setup_manager):
@@ -276,14 +287,15 @@ def test_select_option_with_skill_check_success(mock_randint, setup_manager):
     manager, game_state, _ = setup_manager
     
     # Mock the random roll for a success
-    mock_randint.return_value = 20
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [5, 5]  # Total 10 (high roll, not critical)
     
     # Configure game state with player skills
     game_state.player.skills = {"empathy": 3}
     
     # Add skill check dialogue nodes to the dialogue tree
     skill_check = EnhancedSkillCheck(
-        base_difficulty=15,
+        base_difficulty=12,
         primary_skill="empathy",
         supporting_skills=[]
     )
@@ -345,8 +357,10 @@ def test_select_option_with_skill_check_success(mock_randint, setup_manager):
     
     # Check skill check result
     assert skill_check_response is not None
-    assert skill_check_response.success is True
+    assert skill_check_response.success is True  # 10 (roll) + 3 (skill) = 13, which is >= 12
     assert skill_check_response.skill == "empathy"
+    assert skill_check_response.dice_values == [5, 5]
+    assert skill_check_response.critical_result is None
     
     # Check we got the success node
     assert speech_response is not None
@@ -362,14 +376,15 @@ def test_select_option_with_skill_check_failure(mock_randint, setup_manager):
     manager, game_state, _ = setup_manager
     
     # Mock the random roll for a failure
-    mock_randint.return_value = 1
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [2, 2]  # Total 4 (low roll, not critical)
     
     # Configure game state with player skills
     game_state.player.skills = {"empathy": 3}
     
     # Add skill check dialogue nodes to the dialogue tree (reusing the setup from the success test)
     skill_check = EnhancedSkillCheck(
-        base_difficulty=15,
+        base_difficulty=12,
         primary_skill="empathy",
         supporting_skills=[]
     )
@@ -431,8 +446,10 @@ def test_select_option_with_skill_check_failure(mock_randint, setup_manager):
     
     # Check skill check result
     assert skill_check_response is not None
-    assert skill_check_response.success is False
+    assert skill_check_response.success is False  # 4 (roll) + 3 (skill) = 7, which is < 12
     assert skill_check_response.skill == "empathy"
+    assert skill_check_response.dice_values == [2, 2]
+    assert skill_check_response.critical_result is None
     
     # Check we got the failure node
     assert speech_response is not None
@@ -448,7 +465,8 @@ def test_select_option_with_skill_check_no_special_nodes(mock_randint, setup_man
     manager, game_state, _ = setup_manager
     
     # Mock the random roll
-    mock_randint.return_value = 15  # This could be success or failure depending on the test
+    # Now using 2d6 system instead of d20
+    mock_randint.side_effect = [4, 4]  # Total 8
     
     # Configure game state with player skills
     game_state.player.skills = {"logic": 2}
@@ -496,8 +514,15 @@ def test_select_option_with_skill_check_no_special_nodes(mock_randint, setup_man
     assert any(isinstance(r, DialogueResponse.SkillCheck) for r in responses)
     assert any(isinstance(r, DialogueResponse.Speech) for r in responses)
     
-    # Find the speech response
+    # Find the skill check and speech responses
+    skill_check_response = next((r for r in responses if isinstance(r, DialogueResponse.SkillCheck)), None)
     speech_response = next((r for r in responses if isinstance(r, DialogueResponse.Speech)), None)
+    
+    # Check skill check result
+    assert skill_check_response is not None
+    assert skill_check_response.success is True  # 8 (roll) + 2 (skill) = 10, which equals the difficulty(10)
+    assert skill_check_response.dice_values == [4, 4]
+    assert skill_check_response.critical_result is None
     
     # Check we got the default node regardless of success/failure
     assert speech_response is not None
@@ -867,3 +892,379 @@ def test_determine_entry_point_multiple_conditions(setup_manager):
         
         # Assert we get the most specific entry point (the one with most conditions)
         assert entry_point == "npc2_full"
+
+@patch('random.randint')
+def test_process_skill_check_with_2d6_dice(mock_randint, setup_manager):
+    """Test processing a skill check with the new 2d6 dice system."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return 3 and 4 (total 7)
+    mock_randint.side_effect = [3, 4]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"perception": 2}
+    
+    # Create a skill check
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=8,
+        primary_skill="perception",
+        supporting_skills=[],
+        emotional_modifiers={}
+    )
+    
+    # Process the skill check
+    result = manager._process_skill_check(skill_check, game_state)
+    
+    # Assertions
+    assert isinstance(result, DialogueResponse.SkillCheck)
+    assert result.dice_values == [3, 4]
+    assert result.roll == 7  # Sum of dice values
+    assert result.skill == "perception"
+    assert result.difficulty == 8
+    assert result.success is True  # 7 (roll) + 2 (skill) = 9, which is >= 8
+    assert result.critical_result is None  # Not a critical result
+
+@patch('random.randint')
+def test_process_skill_check_critical_success(mock_randint, setup_manager):
+    """Test processing a skill check with a critical success (double 6)."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return double 6 (critical success)
+    mock_randint.side_effect = [6, 6]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"logic": 1}
+    
+    # Create a difficult skill check that would normally fail
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=20,  # Very high difficulty
+        primary_skill="logic",
+        supporting_skills=[],
+        emotional_modifiers={}
+    )
+    
+    # Process the skill check
+    result = manager._process_skill_check(skill_check, game_state)
+    
+    # Assertions
+    assert isinstance(result, DialogueResponse.SkillCheck)
+    assert result.dice_values == [6, 6]
+    assert result.roll == 12  # Sum of dice values
+    assert result.skill == "logic"
+    assert result.difficulty == 20
+    assert result.success is True  # Critical success always succeeds
+    assert result.critical_result == "success"
+
+@patch('random.randint')
+def test_process_skill_check_critical_failure(mock_randint, setup_manager):
+    """Test processing a skill check with a critical failure (double 1)."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return double 1 (critical failure)
+    mock_randint.side_effect = [1, 1]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"empathy": 10}
+    
+    # Create an easy skill check that would normally succeed
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=5,  # Very low difficulty
+        primary_skill="empathy",
+        supporting_skills=[],
+        emotional_modifiers={}
+    )
+    
+    # Process the skill check
+    result = manager._process_skill_check(skill_check, game_state)
+    
+    # Assertions
+    assert isinstance(result, DialogueResponse.SkillCheck)
+    assert result.dice_values == [1, 1]
+    assert result.roll == 2  # Sum of dice values
+    assert result.skill == "empathy"
+    assert result.difficulty == 5
+    assert result.success is False  # Critical failure always fails
+    assert result.critical_result == "failure"
+
+@patch('random.randint')
+def test_select_option_with_critical_success_node(mock_randint, setup_manager):
+    """Test selecting an option with a critical success that has a specific critical success node."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return double 6 (critical success)
+    mock_randint.side_effect = [6, 6]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"suggestion": 2}
+    
+    # Add dialogue nodes including critical success/failure nodes
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=10,
+        primary_skill="suggestion",
+        supporting_skills=[]
+    )
+    
+    manager.dialogue_tree.update({
+        "critical_test": DialogueNode(
+            id="critical_test",
+            text="This is a very important moment.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[
+                DialogueOption(
+                    id="critical_option",
+                    text="Make a critical attempt",
+                    next_node="neutral_response",  # Default if no special node applies
+                    skill_check=skill_check,
+                    success_node="success_response",
+                    failure_node="failure_response",
+                    critical_success_node="critical_success_response",
+                    critical_failure_node="critical_failure_response"
+                )
+            ]
+        ),
+        "success_response": DialogueNode(
+            id="success_response",
+            text="You did well.",
+            speaker="npc1",
+            emotional_state="Pleased",
+            options=[]
+        ),
+        "failure_response": DialogueNode(
+            id="failure_response",
+            text="You failed.",
+            speaker="npc1",
+            emotional_state="Disappointed",
+            options=[]
+        ),
+        "critical_success_response": DialogueNode(
+            id="critical_success_response",
+            text="That was amazing! A legendary performance!",
+            speaker="npc1",
+            emotional_state="Ecstatic",
+            options=[]
+        ),
+        "critical_failure_response": DialogueNode(
+            id="critical_failure_response",
+            text="That was catastrophically bad!",
+            speaker="npc1",
+            emotional_state="Furious",
+            options=[]
+        ),
+        "neutral_response": DialogueNode(
+            id="neutral_response",
+            text="Nothing special happened.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[]
+        )
+    })
+    
+    # Set current node
+    manager.current_node = "critical_test"
+    
+    # Select the option
+    responses = manager.select_option("critical_option", game_state)
+    
+    # Assertions
+    assert len(responses) >= 2  # At least a skill check response and a speech response
+    
+    # Find the skill check and speech responses
+    skill_check_response = next((r for r in responses if isinstance(r, DialogueResponse.SkillCheck)), None)
+    speech_response = next((r for r in responses if isinstance(r, DialogueResponse.Speech)), None)
+    
+    # Check skill check result
+    assert skill_check_response is not None
+    assert skill_check_response.success is True
+    assert skill_check_response.critical_result == "success"
+    assert skill_check_response.dice_values == [6, 6]
+    
+    # Check we got the critical success node response
+    assert speech_response is not None
+    assert speech_response.text == "That was amazing! A legendary performance!"
+    assert speech_response.emotion == "Ecstatic"
+    
+    # Confirm the current node was updated
+    assert manager.current_node == "critical_success_response"
+
+@patch('random.randint')
+def test_select_option_with_critical_failure_node(mock_randint, setup_manager):
+    """Test selecting an option with a critical failure that has a specific critical failure node."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return double 1 (critical failure)
+    mock_randint.side_effect = [1, 1]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"suggestion": 2}
+    
+    # Add dialogue nodes including critical success/failure nodes (reuse from previous test)
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=10,
+        primary_skill="suggestion",
+        supporting_skills=[]
+    )
+    
+    manager.dialogue_tree.update({
+        "critical_test": DialogueNode(
+            id="critical_test",
+            text="This is a very important moment.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[
+                DialogueOption(
+                    id="critical_option",
+                    text="Make a critical attempt",
+                    next_node="neutral_response",  # Default if no special node applies
+                    skill_check=skill_check,
+                    success_node="success_response",
+                    failure_node="failure_response",
+                    critical_success_node="critical_success_response",
+                    critical_failure_node="critical_failure_response"
+                )
+            ]
+        ),
+        "success_response": DialogueNode(
+            id="success_response",
+            text="You did well.",
+            speaker="npc1",
+            emotional_state="Pleased",
+            options=[]
+        ),
+        "failure_response": DialogueNode(
+            id="failure_response",
+            text="You failed.",
+            speaker="npc1",
+            emotional_state="Disappointed",
+            options=[]
+        ),
+        "critical_success_response": DialogueNode(
+            id="critical_success_response",
+            text="That was amazing! A legendary performance!",
+            speaker="npc1",
+            emotional_state="Ecstatic",
+            options=[]
+        ),
+        "critical_failure_response": DialogueNode(
+            id="critical_failure_response",
+            text="That was catastrophically bad!",
+            speaker="npc1",
+            emotional_state="Furious",
+            options=[]
+        ),
+        "neutral_response": DialogueNode(
+            id="neutral_response",
+            text="Nothing special happened.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[]
+        )
+    })
+    
+    # Set current node
+    manager.current_node = "critical_test"
+    
+    # Select the option
+    responses = manager.select_option("critical_option", game_state)
+    
+    # Assertions
+    assert len(responses) >= 2  # At least a skill check response and a speech response
+    
+    # Find the skill check and speech responses
+    skill_check_response = next((r for r in responses if isinstance(r, DialogueResponse.SkillCheck)), None)
+    speech_response = next((r for r in responses if isinstance(r, DialogueResponse.Speech)), None)
+    
+    # Check skill check result
+    assert skill_check_response is not None
+    assert skill_check_response.success is False
+    assert skill_check_response.critical_result == "failure"
+    assert skill_check_response.dice_values == [1, 1]
+    
+    # Check we got the critical failure node response
+    assert speech_response is not None
+    assert speech_response.text == "That was catastrophically bad!"
+    assert speech_response.emotion == "Furious"
+    
+    # Confirm the current node was updated
+    assert manager.current_node == "critical_failure_response"
+
+@patch('random.randint')
+def test_critical_success_with_no_critical_node(mock_randint, setup_manager):
+    """Test a critical success when no critical_success_node is specified (should use success_node)."""
+    manager, game_state, _ = setup_manager
+    
+    # Mock the dice rolls to return double 6 (critical success)
+    mock_randint.side_effect = [6, 6]
+    
+    # Configure game state with player skills
+    game_state.player.skills = {"logic": 2}
+    
+    # Add dialogue nodes with success/failure nodes but NO critical nodes
+    skill_check = EnhancedSkillCheck(
+        base_difficulty=10,
+        primary_skill="logic",
+        supporting_skills=[]
+    )
+    
+    manager.dialogue_tree.update({
+        "non_critical_test": DialogueNode(
+            id="non_critical_test",
+            text="This is an important but not critical moment.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[
+                DialogueOption(
+                    id="non_critical_option",
+                    text="Make an attempt",
+                    next_node="neutral_response",
+                    skill_check=skill_check,
+                    success_node="success_response",
+                    failure_node="failure_response"
+                    # No critical nodes specified
+                )
+            ]
+        ),
+        "success_response": DialogueNode(
+            id="success_response",
+            text="You did well.",
+            speaker="npc1",
+            emotional_state="Pleased",
+            options=[]
+        ),
+        "failure_response": DialogueNode(
+            id="failure_response",
+            text="You failed.",
+            speaker="npc1",
+            emotional_state="Disappointed",
+            options=[]
+        ),
+        "neutral_response": DialogueNode(
+            id="neutral_response",
+            text="Nothing special happened.",
+            speaker="npc1",
+            emotional_state="Neutral",
+            options=[]
+        )
+    })
+    
+    # Set current node
+    manager.current_node = "non_critical_test"
+    
+    # Select the option
+    responses = manager.select_option("non_critical_option", game_state)
+    
+    # Assertions
+    skill_check_response = next((r for r in responses if isinstance(r, DialogueResponse.SkillCheck)), None)
+    speech_response = next((r for r in responses if isinstance(r, DialogueResponse.Speech)), None)
+    
+    # Check skill check result
+    assert skill_check_response is not None
+    assert skill_check_response.success is True
+    assert skill_check_response.critical_result == "success"
+    
+    # Check we got the regular success node response (not critical)
+    assert speech_response is not None
+    assert speech_response.text == "You did well."
+    
+    # Confirm the current node was updated to success_node
+    assert manager.current_node == "success_response"

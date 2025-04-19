@@ -2,7 +2,7 @@
 Custom components for the dialogue UI.
 """
 
-from typing import ClassVar, Dict, Optional
+from typing import ClassVar, Dict, Optional, List
 
 from textual.containers import Horizontal
 from textual.reactive import reactive
@@ -134,23 +134,90 @@ class SkillCheckResult(Static):
         border: tall $error;
         color: $error;
     }
+    
+    .critical-success {
+        border: double $success;
+        color: $success;
+        background: $success 10%;
+    }
+    
+    .critical-failure {
+        border: double $error;
+        color: $error;
+        background: $error 10%;
+    }
+    
+    .dice {
+        margin-right: 1;
+    }
     """
 
-    def __init__(self, skill: str, success: bool, roll: int, difficulty: int, **kwargs):
+    def __init__(self, skill: str, success: bool, roll: int, difficulty: int, 
+                 dice_values: List[int] = None, critical_result: str = None, **kwargs):
         """Initialize the skill check result."""
         super().__init__(**kwargs)
         self.skill = skill
         self.success = success
         self.roll = roll
         self.difficulty = difficulty
-
-        # Set success/failure styling
-        self.add_class("success" if success else "failure")
+        self.dice_values = dice_values or []
+        self.critical_result = critical_result
+        
+        # Set appropriate styling class
+        if critical_result == "success":
+            self.add_class("critical-success")
+        elif critical_result == "failure":
+            self.add_class("critical-failure")
+        else:
+            self.add_class("success" if success else "failure")
+        
+        # For animation we'd set up a timer and update the dice values
+        # but for now we'll just display the final result
+        self.animate_dice = False
 
     def render(self) -> str:
         """Render the skill check content."""
-        result = "SUCCESS" if self.success else "FAILURE"
-        return f"[b]Skill Check:[/b] {self.skill} - {result} (Roll: {self.roll}/{self.difficulty})"
+        # Create dice display
+        dice_display = ""
+        if self.dice_values:
+            dice_faces = {
+                1: "⚀",
+                2: "⚁",
+                3: "⚂",
+                4: "⚃",
+                5: "⚄",
+                6: "⚅"
+            }
+            dice_str = " ".join([dice_faces.get(d, str(d)) for d in self.dice_values])
+            dice_display = f"[bold white on black]{dice_str}[/] "
+        
+        # Determine result text
+        if self.critical_result == "success":
+            result = "CRITICAL SUCCESS"
+        elif self.critical_result == "failure":
+            result = "CRITICAL FAILURE"
+        else:
+            result = "SUCCESS" if self.success else "FAILURE"
+            
+        return f"[b]Skill Check:[/b] {self.skill} - {dice_display}{result} (Total: {self.roll}/{self.difficulty})"
+
+    def animate_dice_roll(self) -> None:
+        """Animate the dice roll over time before revealing the final result."""
+        # This would be implemented in a real application using the Textual Timer
+        # and updating the display with random dice values before showing the final result
+        
+        # Example pseudocode for dice animation:
+        # 1. Start with random dice values
+        # 2. Set a timer to update dice values every 100ms for ~2 seconds
+        # 3. Finally reveal the actual dice values
+        
+        # For now, we'll just set a flag that we want to animate
+        self.animate_dice = True
+        
+        # If this were fully implemented:
+        # timer = self.set_timer(0.1, self._update_dice_animation, repeat=20)
+        # Where _update_dice_animation would update dice_values with random values
+        # and the last call would set the real dice values
 
 
 class DialogueOption(Button):
