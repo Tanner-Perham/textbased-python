@@ -3,6 +3,7 @@ Custom components for the dialogue UI.
 """
 
 from typing import ClassVar, Dict, Optional, List
+import asyncio
 
 from textual.containers import Horizontal
 from textual.reactive import reactive
@@ -153,7 +154,8 @@ class SkillCheckResult(Static):
     """
 
     def __init__(self, skill: str, success: bool, roll: int, difficulty: int, 
-                 dice_values: List[int] = None, critical_result: str = None, **kwargs):
+                 dice_values: List[int] = None, critical_result: str = None, 
+                 game_output=None, history_index: int = -1, **kwargs):
         """Initialize the skill check result."""
         super().__init__(**kwargs)
         self.skill = skill
@@ -162,6 +164,10 @@ class SkillCheckResult(Static):
         self.difficulty = difficulty
         self.dice_values = dice_values or []
         self.critical_result = critical_result
+        
+        # References for text-based animation in the game UI
+        self.game_output = game_output
+        self.history_index = history_index
         
         # Set appropriate styling class
         if critical_result == "success":
@@ -201,23 +207,109 @@ class SkillCheckResult(Static):
             
         return f"[b]Skill Check:[/b] {self.skill} - {dice_display}{result} (Total: {self.roll}/{self.difficulty})"
 
-    def animate_dice_roll(self) -> None:
-        """Animate the dice roll over time before revealing the final result."""
-        # This would be implemented in a real application using the Textual Timer
-        # and updating the display with random dice values before showing the final result
+    def animate_dice_roll(self) -> asyncio.Future:
+        """Animate the dice roll over time before revealing the final result.
         
-        # Example pseudocode for dice animation:
-        # 1. Start with random dice values
-        # 2. Set a timer to update dice values every 100ms for ~2 seconds
-        # 3. Finally reveal the actual dice values
+        Returns:
+            A future that completes when the animation is finished.
+        """
+        import asyncio
         
-        # For now, we'll just set a flag that we want to animate
+        # Store the final dice values to restore at the end of animation
+        self._final_dice_values = self.dice_values.copy() if self.dice_values else []
+        # Start with random dice values
+        self._animation_count = 0
+        self._max_animations = 20
         self.animate_dice = True
         
-        # If this were fully implemented:
-        # timer = self.set_timer(0.1, self._update_dice_animation, repeat=20)
-        # Where _update_dice_animation would update dice_values with random values
-        # and the last call would set the real dice values
+        # Create a future to track when animation is complete
+        self._animation_complete = asyncio.get_event_loop().create_future()
+        
+        # Use manual animations since we may not be mounted
+        self._do_animation()
+        
+        # Return the future so caller can await it
+        return self._animation_complete
+    
+    def _do_animation(self) -> None:
+        """Perform a single animation step and schedule the next one."""
+        import random
+        import asyncio
+        from asyncio import get_event_loop
+
+        # Update animation count
+        self._animation_count += 1
+        
+        # Generate random dice values for the animation
+        if self._animation_count < self._max_animations:
+            # Number of dice should match the final result
+            num_dice = len(self._final_dice_values) if self._final_dice_values else 2
+            self.dice_values = [random.randint(1, 6) for _ in range(num_dice)]
+            
+            # Schedule next animation frame
+            loop = get_event_loop()
+            loop.call_later(0.1, self._do_animation)
+        else:
+            # Last call - set the real dice values
+            self.dice_values = self._final_dice_values
+            self.animate_dice = False
+            
+            # Mark animation as complete
+            if hasattr(self, '_animation_complete') and not self._animation_complete.done():
+                self._animation_complete.set_result(True)
+        
+        # Refresh the display to show the updated dice
+        self.refresh()
+        
+        # If we have a reference to the game output, update the text display as well
+        if self.game_output is not None and self.history_index >= 0:
+            self._update_text_display()
+
+    def _update_dice_animation(self) -> None:
+        """Update the dice values during animation."""
+        # This is the old method, kept for reference but no longer used
+        pass
+
+    def _update_text_display(self) -> None:
+        """Update the text-based display with current dice values."""
+        # Create dice display
+        dice_faces = {
+            1: "⚀",
+            2: "⚁",
+            3: "⚂",
+            4: "⚃",
+            5: "⚄",
+            6: "⚅"
+        }
+        
+        # Generate the dice text representation
+        dice_str = " ".join([dice_faces.get(d, str(d)) for d in self.dice_values])
+        
+        # Determine result text
+        if self._animation_count < self._max_animations - 1:
+            # During animation, show dice but not result
+            result_text = f"Skill Check - {self.skill} - Rolling... [{dice_str}]"
+        else:
+            # Final state - show complete result
+            if self.critical_result == "success":
+                result = "CRITICAL SUCCESS"
+            elif self.critical_result == "failure":
+                result = "CRITICAL FAILURE"
+            else:
+                result = "SUCCESS" if self.success else "FAILURE"
+                
+            result_text = f"Skill Check - {self.skill} - {result} [{dice_str}] (Total: {self.roll}/{self.difficulty})"
+        
+        # Update the dialogue history if we have access to it
+        if hasattr(self.game_output, "dialogue_mode") and self.history_index < len(self.game_output.dialogue_mode.dialogue_history):
+            # Update the history entry with the current dice state
+            dialogue_mode = self.game_output.dialogue_mode
+            dialogue_mode.dialogue_history[self.history_index] = result_text
+            
+            # Only refresh the display occasionally to avoid flickering
+            # Update on every 4th frame and on the final frame
+            if self._animation_count % 4 == 0 or self._animation_count >= self._max_animations:
+                dialogue_mode.update_display()
 
 
 class DialogueOption(Button):

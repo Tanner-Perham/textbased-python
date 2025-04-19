@@ -53,7 +53,15 @@ class DialogueMode:
         self.reveal_all_text = False
         self.latest_responses = []
         self.previously_shown_lines = 0
-        self.process_responses(responses)
+        
+        # Create and run the async task to process responses
+        asyncio.create_task(self._async_process_dialogue(responses))
+
+    async def _async_process_dialogue(self, responses: List[DialogueResponse]) -> None:
+        """Process dialogue responses asynchronously."""
+        # Process the responses (will wait for any skill checks to complete)
+        await self.process_responses(responses)
+        # Update the display after all responses are processed
         self.update_display()
         # Set focus to the input box
         self.game_ui.game_input.focus()
@@ -91,7 +99,7 @@ class DialogueMode:
             # Keep focus on the input box
             self.game_ui.game_input.focus()
 
-    def process_responses(self, responses: List[DialogueResponse]) -> None:
+    async def process_responses(self, responses: List[DialogueResponse]) -> None:
         """Process a list of dialogue responses."""
         new_options = []
         new_responses = []  # Track new responses for typewriter effect
@@ -100,7 +108,7 @@ class DialogueMode:
             if isinstance(response, DialogueResponse.Options):
                 new_options = response.options
             else:
-                self.add_to_history(response)
+                await self.add_to_history(response)
                 new_responses.append(response)  # Track this as a new response
 
         # Update options if new ones were provided
@@ -114,7 +122,7 @@ class DialogueMode:
         # Store the latest response for typewriter effect if any
         self.latest_responses = new_responses
         
-    def add_to_history(self, response: DialogueResponse) -> None:
+    async def add_to_history(self, response: DialogueResponse) -> None:
         """Add a dialogue response to the history."""
         if isinstance(response, DialogueResponse.Speech):
             # Use NPC name if speaker matches an NPC ID, otherwise use speaker directly
@@ -125,9 +133,31 @@ class DialogueMode:
             # Format inner voice without brackets to avoid markup issues
             self.dialogue_history.append(f"Inner Voice - {response.voice_type}: {response.text}")
         elif isinstance(response, DialogueResponse.SkillCheck):
-            # Format skill check without brackets to avoid markup issues
-            result = "Success" if response.success else "Failure"
-            self.dialogue_history.append(f"Skill Check - {response.skill} - {result}")
+            # Add a placeholder to history
+            result_text = f"Skill Check - {response.skill} - "
+            result_text += "Rolling..."
+            self.dialogue_history.append(result_text)
+            
+            # Get the index of the skill check in the history
+            history_index = len(self.dialogue_history) - 1
+            
+            # Create a SkillCheckResult to display and animate
+            skill_check = SkillCheckResult(
+                skill=response.skill,
+                success=response.success,
+                roll=response.roll,
+                difficulty=response.difficulty,
+                dice_values=response.dice_values,
+                critical_result=response.critical_result,
+                game_output=self.game_ui,
+                history_index=history_index
+            )
+            
+            # Animate the dice roll and wait for it to complete
+            animation_future = skill_check.animate_dice_roll()
+            await animation_future
+            
+            # Animation is now complete, dialogue can continue
 
     def select_previous(self) -> None:
         """Select the previous dialogue option."""
@@ -153,12 +183,15 @@ class DialogueMode:
             return ""
         selected_option = self.options[self.selected_index]
         
-        # Add the selected option to history
-        self.add_to_history(DialogueResponse.Speech(
+        # Create a player speech response
+        player_speech = DialogueResponse.Speech(
             speaker="You",
             text=selected_option.text,
             emotion="Neutral"
-        ))
+        )
+        
+        # Add the selected option to history using create_task since this is called from sync code
+        asyncio.create_task(self.add_to_history(player_speech))
         
         return selected_option.id
     
@@ -213,8 +246,48 @@ class DialogueMode:
                     self.current_dialogue_buffer.append(line)
                     continue
                 
-                # For dialogue like "Skill Check -", display immediately
+                # For skill check lines, handle specially to allow dice animation
                 if "Skill Check -" in line:
+                    # Extract the skill name from the line
+                    parts = line.split(" - ")
+                    if len(parts) >= 2:
+                        skill_name = parts[1]
+                        # Find the matching skill check in latest_responses
+                        skill_check_response = next(
+                            (r for r in self.latest_responses 
+                             if isinstance(r, DialogueResponse.SkillCheck) and r.skill == skill_name),
+                            None
+                        )
+                        
+                        if skill_check_response:
+                            # Write the placeholder text immediately
+                            placeholder_text = f"Skill Check - {skill_name} - Rolling..."
+                            self.game_ui.game_output.write(placeholder_text)
+                            self.current_dialogue_buffer.append(placeholder_text)
+                            
+                            # Get the history index
+                            history_index = line_index + start_pos
+                            
+                            # Create and animate a SkillCheckResult widget
+                            skill_check = SkillCheckResult(
+                                skill=skill_check_response.skill,
+                                success=skill_check_response.success,
+                                roll=skill_check_response.roll,
+                                difficulty=skill_check_response.difficulty,
+                                dice_values=skill_check_response.dice_values,
+                                critical_result=skill_check_response.critical_result,
+                                game_output=self.game_ui,
+                                history_index=history_index
+                            )
+                            
+                            # Animate the dice roll and wait for the animation to complete
+                            animation_future = skill_check.animate_dice_roll()
+                            await animation_future
+                            
+                            # Now continue the loop - we can use continue here because we're in a loop
+                            continue
+                    
+                    # Fall back to immediate display if no matching skill check found
                     self.game_ui.game_output.write(line)
                     self.current_dialogue_buffer.append(line)
                     continue

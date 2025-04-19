@@ -7,6 +7,7 @@ from textual.screen import Screen
 from textual.keys import Keys
 from .overlay import GameOverlay
 from .dialogue_ui import DialogueMode
+import asyncio
 
 class GameOutput(ScrollableContainer):
     """Widget for game output with scrolling."""
@@ -259,10 +260,19 @@ class GameUI(App):
                 responses = self.game_engine.dialogue_handler.select_option(
                     selected_option_id, self.game_engine.game_state
                 )
-                self.dialogue_mode.process_responses(responses)
-                self.dialogue_mode.update_display()
+                # Create an async task to process responses since process_responses is now async
+                asyncio.create_task(self._async_process_dialogue_responses(responses))
             # Keep focus on the input box
             self.game_input.focus()
+    
+    async def _async_process_dialogue_responses(self, responses):
+        """Process dialogue responses asynchronously."""
+        # Process the responses (will wait for any skill checks to complete)
+        await self.dialogue_mode.process_responses(responses)
+        # Update the display after all responses are processed
+        self.dialogue_mode.update_display()
+        # Keep focus on the input box
+        self.game_input.focus()
 
     def action_toggle_overlay(self) -> None:
         """Toggle the game overlay."""
