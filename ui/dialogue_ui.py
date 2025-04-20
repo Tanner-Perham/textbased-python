@@ -151,6 +151,7 @@ class DialogueMode:
                 success=response.success,
                 roll=response.roll,
                 difficulty=response.difficulty,
+                player_skill=response.player_skill,
                 dice_values=response.dice_values,
                 critical_result=response.critical_result,
                 game_output=self.game_ui,
@@ -408,17 +409,47 @@ class DialogueMode:
             output.append("\nOptions:")
             for i, option in enumerate(self.options):
                 prefix = "> " if i == self.selected_index else "  "
+                
+                # Get option text with skill check info if available
+                display_text = option.text
+                skill_check_info = None
+                
+                # Check if this option has a skill check
+                # Option could be a DialogueOption object from node.py or our UI component
+                if hasattr(option, 'skill_check') and option.skill_check:
+                    # It's a game logic DialogueOption with skill check info
+                    skill_check = option.skill_check
+                    primary_skill = skill_check.primary_skill
+                    difficulty = skill_check.base_difficulty
+                    
+                    # Get player's skill value from game state
+                    player_skill = 0
+                    if primary_skill in self.game_ui.game_engine.game_state.player.skills:
+                        player_skill = self.game_ui.game_engine.game_state.player.skills[primary_skill]
+                    
+                    # Format skill check info to append
+                    skill_check_info = {
+                        "primary_skill": primary_skill,
+                        "base_difficulty": difficulty
+                    }
+                    
+                    # Calculate success chance and append to option text
+                    skill_check_text = self._format_skill_check_info(skill_check_info, player_skill)
+                    display_text = f"{option.text}\n{skill_check_text}"
+                
                 # Wrap long option text
                 wrapped_option = []
-                line = option.text
-                while len(line) > 80:
-                    split_pos = line[:80].rfind(' ')
-                    if split_pos == -1:
-                        split_pos = 80
-                    wrapped_option.append(f"{prefix}{line[:split_pos]}")
-                    line = line[split_pos:].lstrip()
-                    prefix = "  "  # Indent wrapped lines
-                wrapped_option.append(f"{prefix}{line}")
+                for line in display_text.split('\n'):
+                    while len(line) > 80:
+                        split_pos = line[:80].rfind(' ')
+                        if split_pos == -1:
+                            split_pos = 80
+                        wrapped_option.append(f"{prefix}{line[:split_pos]}")
+                        line = line[split_pos:].lstrip()
+                        prefix = "  "  # Indent wrapped lines
+                    wrapped_option.append(f"{prefix}{line}")
+                    prefix = "  "  # Indent additional lines
+                
                 output.extend(wrapped_option)
         
         # Store the full buffer before typewriter effect
@@ -451,6 +482,47 @@ class DialogueMode:
         
         # Clear latest responses after processing
         self.latest_responses = []
+
+    def _format_skill_check_info(self, skill_check_info: dict, player_skill: int) -> str:
+        """Format skill check information for display.
+        
+        Args:
+            skill_check_info: Dictionary with skill check details
+            player_skill: Player's current skill value
+            
+        Returns:
+            Formatted string with skill check information
+        """
+        # Extract skill check information
+        primary_skill = skill_check_info.get("primary_skill", "")
+        difficulty = skill_check_info.get("base_difficulty", 10)
+        
+        # Calculate success chance (using 2d6 + skill vs difficulty)
+        # For 2d6, the range is 2-12, with 7 being most common (6/36 = ~17%)
+        
+        # Calculate probability of success
+        success_prob = 0
+        for die1 in range(1, 7):
+            for die2 in range(1, 7):
+                if die1 + die2 + player_skill >= difficulty:
+                    success_prob += 1
+        
+        # Convert to percentage (36 possible dice combinations)
+        success_prob = (success_prob / 36) * 100
+        
+        # Determine difficulty category based on success probability
+        if success_prob >= 70:
+            difficulty_category = "easy"
+            difficulty_marker = "[green]Easy[/green]"
+        elif success_prob >= 40:
+            difficulty_category = "medium"
+            difficulty_marker = "[yellow]Medium[/yellow]"
+        else:
+            difficulty_category = "hard"
+            difficulty_marker = "[red]Hard[/red]"
+        
+        # Format the skill check information
+        return f"[dim]{primary_skill.title()} Check — {difficulty_marker} ({success_prob:.0f}%)[/dim]"
 
     def handle_key(self, event) -> bool:
         """Handle key events specific to dialogue mode.

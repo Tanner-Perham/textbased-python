@@ -39,6 +39,7 @@ class DialogueResponse:
 
         success: bool
         skill: str
+        player_skill: int
         roll: int
         difficulty: int
         dice_values: List[int] = field(default_factory=list)  # The individual dice values (2d6)
@@ -88,6 +89,7 @@ class DialogueResponse:
             return cls.SkillCheck(
                 success=data.get("success", False),
                 skill=data.get("skill", ""),
+                player_skill=data.get("player_skill", 0),
                 roll=data.get("roll", 0),
                 difficulty=data.get("difficulty", 0),
                 dice_values=data.get("dice_values", []),

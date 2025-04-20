@@ -153,13 +153,14 @@ class SkillCheckResult(Static):
     }
     """
 
-    def __init__(self, skill: str, success: bool, roll: int, difficulty: int, 
+    def __init__(self, skill: str, success: bool, roll: int, difficulty: int, player_skill: int,
                  dice_values: List[int] = None, critical_result: str = None, 
                  game_output=None, history_index: int = -1, **kwargs):
         """Initialize the skill check result."""
         super().__init__(**kwargs)
         self.skill = skill
         self.success = success
+        self.player_skill = player_skill
         self.roll = roll
         self.difficulty = difficulty
         self.dice_values = dice_values or []
@@ -205,7 +206,7 @@ class SkillCheckResult(Static):
         else:
             result = "SUCCESS" if self.success else "FAILURE"
             
-        return f"[b]Skill Check:[/b] {self.skill} - {dice_display}{result} (Total: {self.roll}/{self.difficulty})"
+        return f"[b]Skill Check:[/b] {self.skill} - {dice_display}{result} (Total: {self.roll + self.player_skill} ({self.roll} + {self.player_skill})/{self.difficulty})"
 
     def animate_dice_roll(self) -> asyncio.Future:
         """Animate the dice roll over time before revealing the final result.
@@ -298,7 +299,8 @@ class SkillCheckResult(Static):
             else:
                 result = "SUCCESS" if self.success else "FAILURE"
                 
-            result_text = f"Skill Check - {self.skill} - {result} [{dice_str}] (Total: {self.roll}/{self.difficulty})"
+            result_text = f"Skill Check - {self.skill} - {result} [{dice_str}] (Total: {self.roll} + {self.player_skill}/{self.difficulty})"
+
         
         # Update the dialogue history if we have access to it
         if hasattr(self.game_output, "dialogue_mode") and self.history_index < len(self.game_output.dialogue_mode.dialogue_history):
@@ -335,16 +337,82 @@ class DialogueOption(Button):
         color: $text;
         border-left: heavy $accent;
     }
+    
+    .skill-check-info {
+        color: $text-muted;
+    }
+    
+    .skill-check-easy {
+        color: $success;
+    }
+    
+    .skill-check-medium {
+        color: $warning;
+    }
+    
+    .skill-check-hard {
+        color: $error;
+    }
     """
 
-    def __init__(self, option_id: str, text: str, selected: bool = False, **kwargs):
+    def __init__(self, option_id: str, text: str, selected: bool = False, 
+                 skill_check_info: dict = None, player_skill: int = 0, **kwargs):
         """Initialize the dialogue option."""
         super().__init__(text, **kwargs)
         self.option_id = option_id
+        self.skill_check_info = skill_check_info
+        self.player_skill = player_skill
+        
+        # Format the display label with skill check info if available
+        display_text = text
+        if skill_check_info:
+            skill_info = self._format_skill_check_info(skill_check_info, player_skill)
+            display_text = f"{text}\n{skill_info}"
 
         if selected:
             self.add_class("selected")
             # Add a '>' indicator to selected option
-            self.label = f"> {text}"
+            self.label = f"> {display_text}"
         else:
-            self.label = f"  {text}"
+            self.label = f"  {display_text}"
+    
+    def _format_skill_check_info(self, skill_check_info: dict, player_skill: int) -> str:
+        """Format skill check information for display.
+        
+        Args:
+            skill_check_info: Dictionary with skill check details
+            player_skill: Player's current skill value
+            
+        Returns:
+            Formatted string with skill check information
+        """
+        # Extract skill check information
+        primary_skill = skill_check_info.get("primary_skill", "")
+        difficulty = skill_check_info.get("base_difficulty", 10)
+        
+        # Calculate success chance (using 2d6 + skill vs difficulty)
+        # For 2d6, the range is 2-12, with 7 being most common (6/36 = ~17%)
+        
+        # Calculate probability of success
+        success_prob = 0
+        for die1 in range(1, 7):
+            for die2 in range(1, 7):
+                if die1 + die2 + player_skill >= difficulty:
+                    success_prob += 1
+        
+        # Convert to percentage (36 possible dice combinations)
+        success_prob = (success_prob / 36) * 100
+        
+        # Determine difficulty category based on success probability
+        if success_prob >= 70:
+            difficulty_category = "easy"
+            difficulty_marker = "[green]Easy[/green]"
+        elif success_prob >= 40:
+            difficulty_category = "medium"
+            difficulty_marker = "[yellow]Medium[/yellow]"
+        else:
+            difficulty_category = "hard"
+            difficulty_marker = "[red]Hard[/red]"
+        
+        # Format the skill check information
+        return f"[dim]{primary_skill.title()} Check — {difficulty_marker} ({success_prob:.0f}%)[/dim]"

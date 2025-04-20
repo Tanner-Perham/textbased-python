@@ -432,6 +432,7 @@ class DialogueManager:
         return DialogueResponse.SkillCheck(
             success=success,
             skill=check.primary_skill,
+            player_skill=player_skill,
             roll=roll,
             difficulty=difficulty,
             dice_values=dice_values,
