@@ -105,13 +105,22 @@ class GameState:
 
     def _update_player_stats(self):
         """Update player stats based on equipment effects."""
-        # Reset to base stats
+        # Reset to base stats for attributes
         self.player.attributes = {
             "intelligence": 10,
             "psyche": 10,
             "physique": 10,
             "motorics": 10
         }
+        
+        # Store base skill values if not already stored
+        if not hasattr(self.player, '_base_skills'):
+            self.player._base_skills = {}
+            for skill_name, value in self.player.skills.items():
+                self.player._base_skills[skill_name] = value
+        
+        # Reset skills to base values
+        self.player.skills = self.player._base_skills.copy()
         
         # Apply equipment effects
         for effect in self.inventory_manager.get_active_effects():
@@ -266,6 +275,12 @@ class GameState:
         """Modify a skill by the given amount."""
         if skill_name in self.player.skills:
             self.player.skills[skill_name] += amount
+            # Update base skills as well
+            if hasattr(self.player, '_base_skills'):
+                self.player._base_skills[skill_name] += amount
+            else:
+                # Initialize _base_skills if it doesn't exist yet
+                self.player._base_skills = {skill_name: self.player.skills[skill_name]}
             return True
         return False
 

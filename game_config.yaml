@@ -748,7 +748,10 @@ dialogue_trees:
           Friendly: 2
           Suspicious: -3
         conditions:
-          required_items: ["police_badge"]
+          any_of:
+            - required_items: ["police_badge"]
+            - worn_items: ["police_badge"]
+            - required_items_any_inventory: ["police_badge"]
           required_skills:
             authority: 8
         next_node: "martinez_cooperative"
@@ -1064,6 +1067,11 @@ dialogue_trees:
           supporting_skills:
             - ["agility", 0.5]
           white_check: false
+        conditions:
+          any_of:
+            - required_items: ["police_badge"]
+            - worn_items: ["police_badge"] 
+            - required_items_any_inventory: ["police_badge"]
         next_node: "martinez_embarrassed"
       - id: "surrender"
         text: "I'm cooperating. Let's talk this through calmly."
@@ -1434,7 +1442,10 @@ dialogue_trees:
         emotional_impact:
           Friendly: 5
         conditions:
-          required_items: ["silver_locket"]
+          any_of:
+            - required_items: ["silver_locket"]
+            - worn_items: ["silver_locket"]
+            - required_items_any_inventory: ["silver_locket"]
           required_quests:
             "missing_locket": "InProgress"
         consequences:
@@ -1496,7 +1507,10 @@ dialogue_trees:
     speaker: "eliza"
     emotional_state: "Hopeful"
     conditions:
-      required_items: ["silver_locket"]
+      any_of:
+        - required_items: ["silver_locket"]
+        - worn_items: ["silver_locket"]
+        - required_items_any_inventory: ["silver_locket"]
       required_quests:
         "missing_locket": "InProgress"
     options:
