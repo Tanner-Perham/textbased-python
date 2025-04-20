@@ -43,6 +43,8 @@ class Location:
     description: str
     available_actions: List[Dict[str, Any]] = field(default_factory=list)
     connected_locations: List[str] = field(default_factory=list)
+    location_items: List[Dict[str, Any]] = field(default_factory=list)
+    location_containers: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

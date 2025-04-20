@@ -57,6 +57,203 @@ class GameEngine:
         
         # Flag to track if character creation has been completed
         self.character_created = False
+        
+        # Load location items from config
+        self._load_location_items()
+
+    def _load_location_items(self) -> None:
+        """Load items from the config into the game state's locations."""
+        print("Loading location items...")
+        for location_id, location in self.config.locations.items():
+            # Load regular items in the location
+            if hasattr(location, 'location_items') and location.location_items:
+                print(f"  Found {len(location.location_items)} items in location {location_id}")
+                for item_data in location.location_items:
+                    # Create a copy of the item to avoid modifying the config
+                    # First check if this is a reference to an existing item
+                    if 'id' in item_data and item_data['id'] in self.config.items:
+                        # Use the existing item as a template
+                        template_item = self.config.items[item_data['id']]
+                        # Create a deep copy of the item
+                        if isinstance(template_item, Container):
+                            item_copy = Container(
+                                id=template_item.id,
+                                name=template_item.name,
+                                description=template_item.description,
+                                categories=template_item.categories,
+                                weight=template_item.weight,
+                                capacity=template_item.capacity,
+                                allowed_categories=template_item.allowed_categories
+                            )
+                        elif isinstance(template_item, Wearable):
+                            item_copy = Wearable(
+                                id=template_item.id,
+                                name=template_item.name,
+                                description=template_item.description,
+                                categories=template_item.categories,
+                                weight=template_item.weight,
+                                slot=template_item.slot,
+                                effects=template_item.effects
+                            )
+                        else:
+                            item_copy = Item(
+                                id=template_item.id,
+                                name=template_item.name,
+                                description=template_item.description,
+                                categories=template_item.categories,
+                                weight=template_item.weight,
+                                stackable=getattr(template_item, 'stackable', False),
+                                quantity=getattr(template_item, 'quantity', 1)
+                            )
+                        
+                        # Add attributes from the location-specific item data that might override defaults
+                        if 'is_obvious' in item_data:
+                            item_copy.is_obvious = item_data['is_obvious']
+                        else:
+                            item_copy.is_obvious = True
+                            
+                        if 'perception_difficulty' in item_data:
+                            item_copy.perception_difficulty = item_data['perception_difficulty']
+                            
+                        if 'hidden_clues' in item_data:
+                            item_copy.hidden_clues = item_data['hidden_clues']
+                            
+                    else:
+                        # Create a new item from scratch
+                        categories = []
+                        if 'categories' in item_data:
+                            categories = [ItemCategory[cat] if isinstance(cat, str) else cat 
+                                        for cat in item_data['categories']]
+                                        
+                        item_copy = Item(
+                            id=item_data['id'],
+                            name=item_data['name'],
+                            description=item_data['description'],
+                            categories=categories,
+                            weight=item_data.get('weight', 0.1),
+                            stackable=item_data.get('stackable', False),
+                            quantity=item_data.get('quantity', 1)
+                        )
+                        
+                        # Add perception difficulty if applicable
+                        if 'perception_difficulty' in item_data:
+                            item_copy.perception_difficulty = item_data['perception_difficulty']
+                        
+                        # Add obviousness flag
+                        if 'is_obvious' in item_data:
+                            item_copy.is_obvious = item_data['is_obvious']
+                        else:
+                            item_copy.is_obvious = True
+                            
+                        # Add hidden clues if applicable
+                        if 'hidden_clues' in item_data:
+                            item_copy.hidden_clues = item_data['hidden_clues']
+                        
+                        # Add hidden lore if applicable
+                        if 'hidden_lore' in item_data:
+                            item_copy.hidden_lore = item_data['hidden_lore']
+                            
+                        # Add hidden usage if applicable
+                        if 'hidden_usage' in item_data:
+                            item_copy.hidden_usage = item_data['hidden_usage']
+                    
+                    # Add to the location
+                    self.game_state.add_item_to_location(location_id, item_copy)
+            
+            # Load containers and their contents
+            if hasattr(location, 'location_containers') and location.location_containers:
+                for container_data in location.location_containers:
+                    # First check if this is a reference to an existing container
+                    if 'id' in container_data and container_data['id'] in self.config.items:
+                        template_container = self.config.items[container_data['id']]
+                        if isinstance(template_container, Container):
+                            container = Container(
+                                id=template_container.id,
+                                name=template_container.name,
+                                description=template_container.description,
+                                categories=template_container.categories,
+                                weight=template_container.weight,
+                                capacity=template_container.capacity,
+                                allowed_categories=template_container.allowed_categories
+                            )
+                        else:
+                            # Create a new container if the template isn't a Container
+                            container = Container(
+                                id=container_data['id'],
+                                name=container_data['name'],
+                                description=container_data['description'],
+                                categories=[ItemCategory.CONTAINER],
+                                weight=container_data.get('weight', 1.0),
+                                capacity=container_data.get('capacity', 10.0),
+                                allowed_categories=container_data.get('allowed_categories')
+                            )
+                    else:
+                        # Create a new container from scratch
+                        categories = []
+                        if 'categories' in container_data:
+                            categories = [ItemCategory[cat] if isinstance(cat, str) else cat 
+                                        for cat in container_data['categories']]
+                                        
+                        container = Container(
+                            id=container_data['id'],
+                            name=container_data['name'],
+                            description=container_data['description'],
+                            categories=categories or [ItemCategory.CONTAINER],
+                            weight=container_data.get('weight', 1.0),
+                            capacity=container_data.get('capacity', 10.0),
+                            allowed_categories=container_data.get('allowed_categories')
+                        )
+                    
+                    # Add container to the location
+                    self.game_state.add_item_to_location(location_id, container)
+                    
+                    # Add contents to the container
+                    if 'contents' in container_data and container_data['contents']:
+                        for content_data in container_data['contents']:
+                            if 'id' in content_data and content_data['id'] in self.config.items:
+                                # Use existing item as template
+                                template_item = self.config.items[content_data['id']]
+                                # Create a deep copy
+                                if isinstance(template_item, Item):
+                                    content_item = Item(
+                                        id=template_item.id,
+                                        name=template_item.name,
+                                        description=template_item.description,
+                                        categories=template_item.categories,
+                                        weight=template_item.weight,
+                                        stackable=getattr(template_item, 'stackable', False),
+                                        quantity=getattr(template_item, 'quantity', 1)
+                                    )
+                                else:
+                                    # Create generic item if template isn't an Item
+                                    content_item = Item(
+                                        id=content_data['id'],
+                                        name=content_data['name'],
+                                        description=content_data['description'],
+                                        categories=[],
+                                        weight=content_data.get('weight', 0.1),
+                                        stackable=content_data.get('stackable', False),
+                                        quantity=content_data.get('quantity', 1)
+                                    )
+                            else:
+                                # Create from scratch
+                                categories = []
+                                if 'categories' in content_data:
+                                    categories = [ItemCategory[cat] if isinstance(cat, str) else cat 
+                                                for cat in content_data['categories']]
+                                                
+                                content_item = Item(
+                                    id=content_data['id'],
+                                    name=content_data['name'],
+                                    description=content_data['description'],
+                                    categories=categories,
+                                    weight=content_data.get('weight', 0.1),
+                                    stackable=content_data.get('stackable', False),
+                                    quantity=content_data.get('quantity', 1)
+                                )
+                            
+                            # Add to the container
+                            self.game_state.add_item_to_location_container(location_id, container.id, content_item)
 
     def start_game(self) -> None:
         """Start the game after character creation."""
@@ -72,16 +269,16 @@ class GameEngine:
             
         # Give starting inventory items if defined in config
         if hasattr(self.config.game_settings, 'starting_inventory'):
-            for item_id in self.config.game_settings.starting_inventory:
-                if isinstance(item_id, dict):
-                    # Handle old format (dict with item properties)
-                    item_id_value = item_id.get('id')
-                    if item_id_value and item_id_value in self.config.items:
-                        self.game_state.add_item(self.config.items[item_id_value])
-                elif isinstance(item_id, str):
-                    # Handle new format (string item IDs)
-                    if item_id in self.config.items:
-                        self.game_state.add_item(self.config.items[item_id])
+            for item_def in self.config.game_settings.starting_inventory:
+                # If item_def is a string, it's directly the item ID
+                if isinstance(item_def, str):
+                    item_id = item_def
+                # Otherwise, it's a dictionary with an 'id' key
+                else:
+                    item_id = item_def.get('id')
+                
+                if item_id and item_id in self.config.items:
+                    self.game_state.add_item(self.config.items[item_id])
 
     def start_character_creation(self) -> None:
         """Start the character creation process."""
@@ -125,6 +322,17 @@ class GameEngine:
             response = self._handle_examine_item(item_name)
             return self._format_response(response, notifications)
 
+        elif parts[0] == "search" and len(parts) > 1:
+            # Handle search <area> command
+            area_name = " ".join(parts[1:])
+            response = self._handle_search_area(area_name)
+            return self._format_response(response, notifications)
+
+        elif parts[0] == "search" and len(parts) == 1:
+            # Handle general search command without specific area
+            response = self._handle_search()
+            return self._format_response(response, notifications)
+
         elif parts[0] in ["talk", "speak"] and len(parts) > 1:
             npc_parts = parts[1:]
             connecting_words = ["to", "with", "the", "about"]
@@ -148,6 +356,35 @@ class GameEngine:
 
         elif parts[0] == "back":
             response = self._handle_movement("back")
+            return self._format_response(response, notifications)
+
+        elif parts[0] in ["take", "pick", "grab", "get"] and len(parts) > 1:
+            # Handle 'pick up' command format
+            if parts[0] == "pick" and len(parts) > 2 and parts[1] == "up":
+                item_name = " ".join(parts[2:])
+            # Handle 'take from container' format
+            elif parts[0] == "take" and len(parts) > 3 and "from" in parts:
+                from_index = parts.index("from")
+                item_name = " ".join(parts[1:from_index])
+                container_name = " ".join(parts[from_index+1:])
+                return self._format_response(self._handle_take_from_location_container(item_name, container_name), notifications)
+            else:
+                item_name = " ".join(parts[1:])
+            
+            response = self._handle_take_item(item_name)
+            return self._format_response(response, notifications)
+
+        elif parts[0] in ["drop", "put", "place", "leave"] and len(parts) > 1:
+            # Handle 'put in container' format in location
+            if parts[0] == "put" and len(parts) > 3 and "in" in parts:
+                in_index = parts.index("in")
+                item_name = " ".join(parts[1:in_index])
+                container_name = " ".join(parts[in_index+1:])
+                return self._format_response(self._handle_put_in_location_container(item_name, container_name), notifications)
+            else:
+                item_name = " ".join(parts[1:])
+                
+            response = self._handle_drop_item(item_name)
             return self._format_response(response, notifications)
 
         elif parts[0] in ["exits", "directions", "connections"] or (
@@ -315,6 +552,17 @@ class GameEngine:
             response += "\n\nYou see:"
             for npc in npcs_here:
                 response += f"\n- {npc.name}"
+
+        # Add obvious items in the location
+        obvious_items = self.game_state.get_obvious_items(self.current_location)
+        if obvious_items:
+            if not npcs_here:  # Only add the "You see:" header if we didn't already add it for NPCs
+                response += "\n\nYou see:"
+            for item in obvious_items:
+                if item.quantity > 1:
+                    response += f"\n- {item.name} (x{item.quantity})"
+                else:
+                    response += f"\n- {item.name}"
 
         # Add connected locations
         if location.connected_locations:
@@ -681,6 +929,12 @@ class GameEngine:
                 "  examine <item> or look at <item> - Examine an item closely, possibly discovering hidden details",
                 "  talk to <NPC> - Engage in conversation with an NPC",
                 "  go/walk <direction> - Move in the specified direction",
+                "  take/pick up <item> - Pick up an item from the current location",
+                "  take <item> from <container> - Take an item from a container in the location",
+                "  drop <item> - Drop an item at the current location",
+                "  put <item> in <container> - Put an item in a container in the location",
+                "  search - Carefully search the current location for hidden items",
+                "  search <area> - Search a specific area or container for hidden items",
                 "  quests - Open the quest log",
                 "  active quests - List all active quests",
                 "  quest info <id> - Get details about a specific quest",
@@ -917,6 +1171,15 @@ class GameEngine:
         except KeyError:
             return f"Invalid slot: {slot_name}. Valid slots are: {', '.join(s.name for s in WearableSlot)}"
         
+        # Get the currently equipped item before unequipping
+        equipped_item = self.game_state.inventory_manager.equipped_items.get(slot)
+        
+        # # If there's an item equipped in this slot, remove its effects from player stats
+        # if equipped_item and hasattr(equipped_item, 'effects') and equipped_item.effects:
+        #     for effect in equipped_item.effects:
+        #         # Remove the effect by applying the negative value
+        #         self.game_state.player.modify_attribute(effect.attribute, -effect.value)
+        
         success, message = self.game_state.unequip_item(slot)
         return message
 
@@ -1145,8 +1408,298 @@ class GameEngine:
             location_id: The ID of the location to navigate to
         """
         if location_id in self.config.locations:
+            # Store previous location before changing
+            self.previous_location = self.current_location
+            
+            # Update current location
             self.current_location = location_id
             self.game_state.current_location = location_id
+            
+            # Mark as visited
             self.game_state.visited_locations.add(location_id)
+            
+            # Check if any quest updates should trigger based on the new location
+            self.quest_manager.check_all_quest_updates()
         else:
             print(f"Warning: Tried to navigate to unknown location: {location_id}")
+
+    def _handle_take_item(self, item_name: str) -> str:
+        """Handle taking an item from the current location."""
+        if not item_name:
+            return "What would you like to take?"
+            
+        # Get all items in the current location
+        location_items = self.game_state.get_location_items(self.current_location)
+        
+        # Try to find the item by name
+        target_item = None
+        target_item_id = None
+        
+        for item in location_items:
+            if item_name.lower() in item.name.lower():
+                target_item = item
+                target_item_id = item.id
+                break
+                
+        if not target_item:
+            return f"You don't see any {item_name} here."
+            
+        # Check if the item has a perception difficulty
+        perception_difficulty = getattr(target_item, 'perception_difficulty', 0)
+        if perception_difficulty > 0:
+            # If the item is hidden, perform a perception check
+            perception_success, roll, difficulty = self._perform_skill_check("perception", perception_difficulty)
+            if not perception_success:
+                return f"You don't see any {item_name} here."
+                
+        # Check if player has enough inventory space
+        if target_item.weight + self.game_state.get_inventory_weight() > self.game_state.get_max_inventory_weight():
+            return f"You can't carry any more. Your inventory is full."
+            
+        # Remove item from location and add to inventory
+        removed_item = self.game_state.remove_item_from_location(self.current_location, target_item_id)
+        if removed_item:
+            self.game_state.add_item(removed_item)
+            
+            # Generate response message
+            if removed_item.quantity > 1:
+                return f"You take {removed_item.quantity} {removed_item.name}."
+            else:
+                return f"You take the {removed_item.name}."
+        else:
+            return f"Failed to take the {item_name}."
+    
+    def _handle_drop_item(self, item_name: str) -> str:
+        """Handle dropping an item in the current location."""
+        if not item_name:
+            return "What would you like to drop?"
+            
+        # Find the item in the player's inventory
+        item = self._find_item_in_inventory(item_name)
+        if not item:
+            return f"You don't have any {item_name} to drop."
+            
+        # Remove the item from inventory
+        removed_item = self.game_state.remove_item(item.id)
+        if removed_item:
+            # Add it to the current location
+            self.game_state.add_item_to_location(self.current_location, removed_item)
+            
+            if removed_item.quantity > 1:
+                return f"You drop {removed_item.quantity} {removed_item.name}."
+            else:
+                return f"You drop the {removed_item.name}."
+        else:
+            return f"Failed to drop the {item_name}."
+    
+    def _handle_take_from_location_container(self, item_name: str, container_name: str) -> str:
+        """Handle taking an item from a container in the current location."""
+        if not item_name or not container_name:
+            return "Please specify both an item and a container."
+            
+        # First, find the container in the current location
+        location_items = self.game_state.get_location_items(self.current_location)
+        
+        container = None
+        container_id = None
+        
+        for item in location_items:
+            if container_name.lower() in item.name.lower() and isinstance(item, Container):
+                container = item
+                container_id = item.id
+                break
+                
+        if not container:
+            return f"You don't see any {container_name} here."
+            
+        # Get items in the container
+        container_items = self.game_state.get_location_container_items(self.current_location, container_id)
+        
+        # Try to find the item by name
+        target_item = None
+        target_item_id = None
+        
+        for item in container_items:
+            if item_name.lower() in item.name.lower():
+                target_item = item
+                target_item_id = item.id
+                break
+                
+        if not target_item:
+            return f"There's no {item_name} in the {container.name}."
+            
+        # Check if player has enough inventory space
+        if target_item.weight + self.game_state.get_inventory_weight() > self.game_state.get_max_inventory_weight():
+            return f"You can't carry any more. Your inventory is full."
+            
+        # Remove item from container and add to inventory
+        removed_item = self.game_state.remove_item_from_location_container(
+            self.current_location, container_id, target_item_id)
+            
+        if removed_item:
+            self.game_state.add_item(removed_item)
+            
+            if removed_item.quantity > 1:
+                return f"You take {removed_item.quantity} {removed_item.name} from the {container.name}."
+            else:
+                return f"You take the {removed_item.name} from the {container.name}."
+        else:
+            return f"Failed to take the {item_name} from the {container.name}."
+    
+    def _handle_put_in_location_container(self, item_name: str, container_name: str) -> str:
+        """Handle putting an item in a container in the current location."""
+        if not item_name or not container_name:
+            return "Please specify both an item and a container."
+            
+        # Find the item in the player's inventory
+        item = self._find_item_in_inventory(item_name)
+        if not item:
+            return f"You don't have any {item_name} to put in the {container_name}."
+            
+        # Find the container in the current location
+        location_items = self.game_state.get_location_items(self.current_location)
+        
+        container = None
+        container_id = None
+        
+        for loc_item in location_items:
+            if container_name.lower() in loc_item.name.lower() and isinstance(loc_item, Container):
+                container = loc_item
+                container_id = loc_item.id
+                break
+                
+        if not container:
+            return f"You don't see any {container_name} here."
+            
+        # Check if container allows this type of item
+        if not container.is_allowed_category(item.categories):
+            return f"You can't put {item.name} in the {container.name}."
+            
+        # Check if container has enough space
+        container_items = self.game_state.get_location_container_items(self.current_location, container_id)
+        current_weight = sum(i.weight * i.quantity for i in container_items)
+        
+        if current_weight + item.weight > container.capacity:
+            return f"The {container.name} doesn't have enough space for {item.name}."
+            
+        # Remove item from inventory
+        removed_item = self.game_state.remove_item(item.id)
+        if removed_item:
+            # Add to container
+            success = self.game_state.add_item_to_location_container(
+                self.current_location, container_id, removed_item)
+                
+            if success:
+                if removed_item.quantity > 1:
+                    return f"You put {removed_item.quantity} {removed_item.name} in the {container.name}."
+                else:
+                    return f"You put the {removed_item.name} in the {container.name}."
+            else:
+                # If failed to add to container, return to inventory
+                self.game_state.add_item(removed_item)
+                return f"Failed to put the {item.name} in the {container.name}."
+        else:
+            return f"Failed to get the {item.name} from your inventory."
+
+    def _handle_search(self) -> str:
+        """Handle a general search of the current location."""
+        response = "You search the current area thoroughly...\n\n"
+        hidden_items_found = []
+        
+        # Get all items in the current location
+        location_items = self.game_state.get_location_items(self.current_location)
+        
+        # Look for hidden items
+        for item in location_items:
+            # Skip obvious items
+            if getattr(item, 'is_obvious', True):
+                continue
+                
+            # Check if item has perception difficulty
+            perception_difficulty = getattr(item, 'perception_difficulty', 0)
+            if perception_difficulty > 0:
+                # Perform perception check
+                perception_success, roll, difficulty = self._perform_skill_check("perception", perception_difficulty)
+                if perception_success:
+                    hidden_items_found.append(item)
+                    item.is_obvious = True  # Item is now obvious
+        
+        if hidden_items_found:
+            response += "You discovered:\n"
+            for item in hidden_items_found:
+                response += f"- {item.name}: {item.description}\n"
+        else:
+            response += "You didn't find anything of interest."
+            
+        return response
+        
+    def _handle_search_area(self, area_name: str) -> str:
+        """Handle searching a specific area in the current location."""
+        response = f"You search the {area_name} carefully...\n\n"
+        
+        # Get all items in the current location
+        location_items = self.game_state.get_location_items(self.current_location)
+        
+        # Try to find container that matches area name
+        container = None
+        container_id = None
+        
+        for item in location_items:
+            if area_name.lower() in item.name.lower() and isinstance(item, Container):
+                container = item
+                container_id = item.id
+                break
+                
+        if container:
+            # Get contents of the container
+            container_items = self.game_state.get_location_container_items(
+                self.current_location, container_id)
+                
+            if container_items:
+                response += f"Inside the {container.name}, you find:\n"
+                for item in container_items:
+                    response += f"- {item.name}\n"
+            else:
+                response += f"The {container.name} is empty."
+                
+            return response
+        
+        # If not a container, look for hidden items related to the area
+        found_items = []
+        
+        for item in location_items:
+            # Skip obvious items unless they're related to the area
+            if getattr(item, 'is_obvious', True) and area_name.lower() not in item.name.lower():
+                continue
+                
+            # Check if item matches the area
+            area_matches = False
+            
+            # Check name
+            if area_name.lower() in item.name.lower():
+                area_matches = True
+                
+            # Check description
+            if area_name.lower() in item.description.lower():
+                area_matches = True
+                
+            # If it matches, check perception
+            if area_matches:
+                perception_difficulty = getattr(item, 'perception_difficulty', 0)
+                if perception_difficulty > 0:
+                    # Perform perception check
+                    perception_success, roll, difficulty = self._perform_skill_check("perception", perception_difficulty)
+                    if perception_success:
+                        found_items.append(item)
+                        item.is_obvious = True  # Item is now obvious
+                else:
+                    found_items.append(item)
+        
+        if found_items:
+            response += "You found:\n"
+            for item in found_items:
+                response += f"- {item.name}: {item.description}\n"
+        else:
+            response += f"You didn't find anything interesting in the {area_name}."
+            
+        return response

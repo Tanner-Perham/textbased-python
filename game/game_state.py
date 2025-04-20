@@ -52,6 +52,8 @@ class GameState:
         self.visited_locations = set()
         self.npc_interactions = {}  # Maps NPC ID to interaction count
         self.relationship_values = {}  # Maps NPC ID to relationship value
+        self.location_items = {}  # Maps location_id to a list of items
+        self.location_containers = {}  # Maps location_id to a dict of container_id -> items
 
     def get_total_attributes(self) -> Dict[str, float]:
         """Get total attributes including equipment bonuses."""
@@ -314,3 +316,128 @@ class GameState:
     def has_visited_location(self, location_id: str) -> bool:
         """Check if a location has been visited."""
         return location_id in self.visited_locations
+
+    def add_item_to_location(self, location_id: str, item: Item) -> None:
+        """Add an item to a location."""
+        if location_id not in self.location_items:
+            self.location_items[location_id] = []
+        
+        # Check if the item already exists in the location
+        for existing_item in self.location_items[location_id]:
+            if existing_item.id == item.id and existing_item.stackable:
+                # If the item is stackable, just increase the quantity
+                existing_item.quantity += item.quantity
+                return
+                
+        # Otherwise, add the new item
+        self.location_items[location_id].append(item)
+    
+    def remove_item_from_location(self, location_id: str, item_id: str, quantity: int = 1) -> Optional[Item]:
+        """
+        Remove an item from a location.
+        
+        Args:
+            location_id: The ID of the location
+            item_id: The ID of the item to remove
+            quantity: The quantity to remove (for stackable items)
+            
+        Returns:
+            The removed item, or None if not found
+        """
+        if location_id not in self.location_items:
+            return None
+            
+        for i, item in enumerate(self.location_items[location_id]):
+            if item.id == item_id:
+                if item.stackable and item.quantity > quantity:
+                    # If stackable and we're not removing all, just reduce quantity
+                    item.quantity -= quantity
+                    # Create a copy of the item with the requested quantity
+                    new_item = Item(
+                        id=item.id,
+                        name=item.name,
+                        description=item.description,
+                        weight=item.weight,
+                        value=item.value,
+                        categories=item.categories,
+                        stackable=item.stackable,
+                        quantity=quantity
+                    )
+                    return new_item
+                else:
+                    # Remove the entire item
+                    return self.location_items[location_id].pop(i)
+                    
+        return None
+    
+    def get_location_items(self, location_id: str) -> List[Item]:
+        """Get all items in a location."""
+        return self.location_items.get(location_id, [])
+    
+    def get_obvious_items(self, location_id: str) -> List[Item]:
+        """Get items that are obviously visible in a location."""
+        items = self.location_items.get(location_id, [])
+        # Return items that are marked as obvious or don't have a perception_difficulty
+        return [item for item in items if getattr(item, 'is_obvious', True) or 
+                                          getattr(item, 'perception_difficulty', 0) <= 0]
+    
+    def add_item_to_location_container(self, location_id: str, container_id: str, item: Item) -> bool:
+        """Add an item to a container in a location."""
+        # Initialize container dict for location if it doesn't exist
+        if location_id not in self.location_containers:
+            self.location_containers[location_id] = {}
+            
+        # Initialize container's items list if it doesn't exist
+        if container_id not in self.location_containers[location_id]:
+            self.location_containers[location_id][container_id] = []
+            
+        container_items = self.location_containers[location_id][container_id]
+        
+        # Check if the item exists and is stackable
+        for existing_item in container_items:
+            if existing_item.id == item.id and existing_item.stackable:
+                existing_item.quantity += item.quantity
+                return True
+                
+        # Add the new item
+        container_items.append(item)
+        return True
+    
+    def remove_item_from_location_container(self, location_id: str, container_id: str, item_id: str, quantity: int = 1) -> Optional[Item]:
+        """Remove an item from a container in a location."""
+        if (location_id not in self.location_containers or 
+            container_id not in self.location_containers[location_id]):
+            return None
+            
+        container_items = self.location_containers[location_id][container_id]
+        
+        for i, item in enumerate(container_items):
+            if item.id == item_id:
+                if item.stackable and item.quantity > quantity:
+                    # Reduce quantity for stackable items
+                    item.quantity -= quantity
+                    # Create a copy with the requested quantity
+                    new_item = Item(
+                        id=item.id,
+                        name=item.name,
+                        description=item.description,
+                        weight=item.weight,
+                        value=item.value,
+                        categories=item.categories,
+                        stackable=item.stackable,
+                        quantity=quantity
+                    )
+                    return new_item
+                else:
+                    # Remove the entire item
+                    return container_items.pop(i)
+                    
+        return None
+    
+    def get_location_container_items(self, location_id: str, container_id: str) -> List[Item]:
+        """Get all items in a container in a location."""
+        if (location_id not in self.location_containers or 
+            container_id not in self.location_containers[location_id]):
+            return []
+            
+        return self.location_containers[location_id][container_id]

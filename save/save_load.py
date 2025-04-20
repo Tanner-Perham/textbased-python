@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from game.game_state import (Clue, GameState, Item, Player, QuestStatus,
-                             TimeOfDay)
+                             TimeOfDay, Container, Wearable, ItemCategory, WearableSlot)
 
 # The directory where saves will be stored
 SAVE_DIR = "saves"
@@ -52,6 +52,17 @@ class GameStateEncoder(json.JSONEncoder):
                 "npc_interactions": obj.npc_interactions,
                 "quest_items": {k: list(v) for k, v in obj.quest_items.items()},
                 "relationship_values": obj.relationship_values,
+                "location_items": {
+                    loc_id: [self.encode_item(item) for item in items]
+                    for loc_id, items in obj.location_items.items()
+                },
+                "location_containers": {
+                    loc_id: {
+                        container_id: [self.encode_item(item) for item in items]
+                        for container_id, items in containers.items()
+                    }
+                    for loc_id, containers in obj.location_containers.items()
+                }
             }
         elif isinstance(obj, datetime):
             return obj.isoformat()
@@ -81,12 +92,47 @@ class GameStateEncoder(json.JSONEncoder):
     
     def encode_item(self, item: Item) -> Dict[str, Any]:
         """Encode item object."""
-        return {
+        item_data = {
             "id": item.id,
             "name": item.name,
             "description": item.description,
-            "effects": item.effects,
+            "categories": [cat.name if hasattr(cat, 'name') else str(cat) for cat in getattr(item, 'categories', [])],
+            "weight": getattr(item, 'weight', 0.1),
+            "value": getattr(item, 'value', 0),
+            "stackable": getattr(item, 'stackable', False),
+            "quantity": getattr(item, 'quantity', 1),
+            "effects": getattr(item, 'effects', []),
         }
+        
+        # Add additional properties for special item types
+        if hasattr(item, 'slot'):
+            item_data["slot"] = item.slot.name if hasattr(item.slot, 'name') else str(item.slot)
+        
+        if hasattr(item, 'capacity'):
+            item_data["capacity"] = item.capacity
+            
+        if hasattr(item, 'allowed_categories'):
+            item_data["allowed_categories"] = item.allowed_categories
+            
+        if hasattr(item, 'is_obvious'):
+            item_data["is_obvious"] = item.is_obvious
+            
+        if hasattr(item, 'perception_difficulty'):
+            item_data["perception_difficulty"] = item.perception_difficulty
+            
+        if hasattr(item, 'hidden_clues'):
+            item_data["hidden_clues"] = item.hidden_clues
+            
+        if hasattr(item, 'hidden_lore'):
+            item_data["hidden_lore"] = item.hidden_lore
+            
+        if hasattr(item, 'hidden_usage'):
+            item_data["hidden_usage"] = item.hidden_usage
+            
+        if hasattr(item, 'discovered'):
+            item_data["discovered"] = item.discovered
+            
+        return item_data
     
     def encode_clue(self, clue: Clue) -> Dict[str, Any]:
         """Encode clue object."""
@@ -161,6 +207,76 @@ def game_state_decoder(obj: Dict[str, Any]) -> Any:
             game_state.quest_items[quest_id] = set(items)
         
         game_state.relationship_values = obj.get("relationship_values", {})
+        
+        # Location items
+        location_items = obj.get("location_items", {})
+        for loc_id, items_data in location_items.items():
+            if loc_id not in game_state.location_items:
+                game_state.location_items[loc_id] = []
+            
+            for item_data in items_data:
+                # Convert string categories to proper enum if needed
+                if "categories" in item_data:
+                    try:
+                        item_data["categories"] = [ItemCategory[cat] if isinstance(cat, str) else cat 
+                                                for cat in item_data["categories"]]
+                    except KeyError:
+                        # If we can't convert to enum, just use the strings
+                        pass
+                
+                # Convert string slot to enum if needed
+                if "slot" in item_data and isinstance(item_data["slot"], str):
+                    try:
+                        item_data["slot"] = WearableSlot[item_data["slot"]]
+                    except KeyError:
+                        pass
+                
+                # Create the appropriate item type
+                if "capacity" in item_data:
+                    item = Container(**item_data)
+                elif "slot" in item_data:
+                    item = Wearable(**item_data)
+                else:
+                    item = Item(**item_data)
+                
+                game_state.location_items[loc_id].append(item)
+        
+        # Location containers
+        location_containers = obj.get("location_containers", {})
+        for loc_id, containers_data in location_containers.items():
+            if loc_id not in game_state.location_containers:
+                game_state.location_containers[loc_id] = {}
+            
+            for container_id, items_data in containers_data.items():
+                if container_id not in game_state.location_containers[loc_id]:
+                    game_state.location_containers[loc_id][container_id] = []
+                
+                for item_data in items_data:
+                    # Convert string categories to proper enum if needed
+                    if "categories" in item_data:
+                        try:
+                            item_data["categories"] = [ItemCategory[cat] if isinstance(cat, str) else cat 
+                                                    for cat in item_data["categories"]]
+                        except KeyError:
+                            # If we can't convert to enum, just use the strings
+                            pass
+                    
+                    # Convert string slot to enum if needed
+                    if "slot" in item_data and isinstance(item_data["slot"], str):
+                        try:
+                            item_data["slot"] = WearableSlot[item_data["slot"]]
+                        except KeyError:
+                            pass
+                    
+                    # Create the appropriate item type
+                    if "capacity" in item_data:
+                        item = Container(**item_data)
+                    elif "slot" in item_data:
+                        item = Wearable(**item_data)
+                    else:
+                        item = Item(**item_data)
+                    
+                    game_state.location_containers[loc_id][container_id].append(item)
         
         return game_state
     
