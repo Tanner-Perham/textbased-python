@@ -196,7 +196,8 @@ class SkillCheckResult(Static):
                 6: "⚅"
             }
             dice_str = " ".join([dice_faces.get(d, str(d)) for d in self.dice_values])
-            dice_display = f"[bold white on black]{dice_str}[/] "
+            # Use parentheses instead of brackets to avoid Rich markup errors
+            dice_display = f"({dice_str}) "
         
         # Determine result text
         if self.critical_result == "success":
@@ -283,13 +284,13 @@ class SkillCheckResult(Static):
             6: "⚅"
         }
         
-        # Generate the dice text representation
+        # Generate the dice text representation - but don't use them directly in markup
         dice_str = " ".join([dice_faces.get(d, str(d)) for d in self.dice_values])
         
         # Determine result text
         if self._animation_count < self._max_animations - 1:
             # During animation, show dice but not result
-            result_text = f"Skill Check - {self.skill} - Rolling... [{dice_str}]"
+            result_text = f"Skill Check - {self.skill} - Rolling... ({dice_str})"
         else:
             # Final state - show complete result
             if self.critical_result == "success":
@@ -299,8 +300,7 @@ class SkillCheckResult(Static):
             else:
                 result = "SUCCESS" if self.success else "FAILURE"
                 
-            result_text = f"Skill Check - {self.skill} - {result} [{dice_str}] (Total: {self.roll} + {self.player_skill}/{self.difficulty})"
-
+            result_text = f"Skill Check - {self.skill} - {result} ({dice_str}) (Total: {self.roll} + {self.player_skill}/{self.difficulty})"
         
         # Update the dialogue history if we have access to it
         if hasattr(self.game_output, "dialogue_mode") and self.history_index < len(self.game_output.dialogue_mode.dialogue_history):

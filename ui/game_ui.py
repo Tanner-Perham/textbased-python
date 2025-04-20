@@ -56,11 +56,8 @@ class GameOutput(ScrollableContainer):
             self.mount(static)
             return
             
-        # Escape any characters that could be interpreted as Rich markup
-        escaped_text = text.replace("[", "\\[").replace("]", "]").replace(":", ":")
-            
-        # Create a Static widget for the text
-        static = Static(escaped_text)
+        # Create a Static widget for the text without escaping Rich markup
+        static = Static(text)
         self.output_widgets.append(static)
         self._text_lines.append(text)  # Store the original text content
         self.mount(static)
@@ -88,11 +85,8 @@ class GameOutput(ScrollableContainer):
                 self.output_widgets.append(static)
                 self._text_lines.append("")  # Add empty line to text lines
             else:
-                # Escape any characters that could be interpreted as Rich markup
-                escaped_text = text.replace("[", "\\[").replace("]", "\\]").replace(":", "\\:")
-                
-                # Create a Static widget for the text
-                static = Static(escaped_text)
+                # Create a Static widget for the text without escaping markup
+                static = Static(text)
                 self.output_widgets.append(static)
                 self._text_lines.append(text)  # Store the original text content
             self.mount(static)
