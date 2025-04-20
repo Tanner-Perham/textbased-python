@@ -118,10 +118,14 @@ class DialogueMode:
         else:
             # No options means conversation should end
             self.end_dialogue()
+            return
             
         # Store the latest response for typewriter effect if any
         self.latest_responses = new_responses
         
+        # Update the display after processing all responses (including skill checks)
+        self.update_display()
+
     async def add_to_history(self, response: DialogueResponse) -> None:
         """Add a dialogue response to the history."""
         if isinstance(response, DialogueResponse.Speech):
@@ -178,7 +182,7 @@ class DialogueMode:
         self.game_ui.game_input.focus()
 
     def select_current(self) -> str:
-        """Select the current dialogue option and return its ID."""
+        """Select the current dialogue option."""
         if not self.options:
             return ""
         selected_option = self.options[self.selected_index]
@@ -190,8 +194,12 @@ class DialogueMode:
             emotion="Neutral"
         )
         
-        # Add the selected option to history using create_task since this is called from sync code
-        asyncio.create_task(self.add_to_history(player_speech))
+        # Add the selected option to history immediately (not async)
+        self.dialogue_history.append(f"You: {selected_option.text}")
+        
+        # Clear options since we've made a selection
+        prev_options = self.options
+        self.options = []
         
         return selected_option.id
     
@@ -369,7 +377,7 @@ class DialogueMode:
             selected_text = self.options[self.selected_index].text
             self.game_ui.game_input.placeholder = f"Selected: {selected_text} (↑/↓ to change, Enter to select, Space to skip)"
         else:
-            self.game_ui.game_input.placeholder = "No options available (Space to skip text)"
+            self.game_ui.game_input.placeholder = "Press Enter to continue (Space to skip text)"
 
         # Build the current dialogue state
         output = []

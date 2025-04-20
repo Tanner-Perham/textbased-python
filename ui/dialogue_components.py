@@ -219,7 +219,7 @@ class SkillCheckResult(Static):
         self._final_dice_values = self.dice_values.copy() if self.dice_values else []
         # Start with random dice values
         self._animation_count = 0
-        self._max_animations = 20
+        self._max_animations = 30
         self.animate_dice = True
         
         # Create a future to track when animation is complete

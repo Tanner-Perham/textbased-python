@@ -252,6 +252,10 @@ class GameUI(App):
         """Select the current dialogue option."""
         if self.dialogue_mode.is_active:
             selected_option_id = self.dialogue_mode.select_current()
+            
+            # First commit the selection to history and update display
+            self.dialogue_mode.update_display()
+            
             if selected_option_id == "end_conversation":
                 self.dialogue_mode.end_dialogue()
             else:
@@ -267,10 +271,10 @@ class GameUI(App):
     
     async def _async_process_dialogue_responses(self, responses):
         """Process dialogue responses asynchronously."""
-        # Process the responses (will wait for any skill checks to complete)
+        # First process the responses (will wait for any skill checks to complete)
         await self.dialogue_mode.process_responses(responses)
-        # Update the display after all responses are processed
-        self.dialogue_mode.update_display()
+        
+        # The dialogue's process_responses already updated the display as needed
         # Keep focus on the input box
         self.game_input.focus()
 
