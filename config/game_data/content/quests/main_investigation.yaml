@@ -1,0 +1,81 @@
+main_investigation:
+  id: "main_investigation"
+  title: "The Warehouse Investigation"
+  description: "Investigate the strange occurrences at the warehouse."
+  short_description: "Investigate warehouse incidents"
+  importance: "Critical"
+  is_main_quest: true
+  is_hidden: false
+  status: "NotStarted"
+  stages:
+    - id: "initial_investigation"
+      title: "Initial Investigation"
+      description: "Gather information about the warehouse incident."
+      status: "NotStarted"
+      objectives:
+        - id: "talk_to_guard"
+          description: "Talk to Officer Martinez about the incident"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "guard_statement"
+                description: "The guard mentioned unusual activity in the warehouse"
+                related_quest: "main_investigation"
+                discovered: true
+        - id: "inspect_door"
+          description: "Examine the warehouse entrance for signs of forced entry"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "forced_entry"
+                description: "The door shows signs of forced entry"
+                related_quest: "main_investigation"
+                discovered: true
+      notification_text: "You've started investigating the warehouse incident."
+    - id: "search_office"
+      title: "Search the Office"
+      description: "Look for clues in the security office."
+      status: "NotStarted"
+      objectives:
+        - id: "check_logbook"
+          description: "Review the security log book"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "logbook_entry"
+                description: "The last entry in the logbook is incomplete"
+                related_quest: "main_investigation"
+                discovered: true
+        - id: "talk_to_worker"
+          description: "Interview Sarah Chen about the incident"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "worker_statement"
+                description: "Sarah mentioned seeing suspicious figures"
+                related_quest: "main_investigation"
+                discovered: true
+      notification_text: "You've found new leads in the security office."
+    - id: "conclusion"
+      title: "Draw Conclusions"
+      description: "Piece together the evidence and solve the case."
+      status: "NotStarted"
+      objectives:
+        - id: "solve_case"
+          description: "Present your findings to Officer Martinez"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "CompleteQuest"
+              data:
+                quest_id: "main_investigation"
+                reward: "case_solved"
+      notification_text: "You've solved the warehouse case!"

@@ -1,0 +1,248 @@
+eliza_default:
+  id: "eliza_default"
+  text: "Hello there. It's nice to meet you, though I'm afraid I'm a bit distracted at the moment."
+  speaker: "eliza"
+  emotional_state: "Nervous"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "She seems upset about something. Maybe I should ask what's wrong."
+      trigger_condition: null
+      skill_requirement: 5
+  options:
+    - id: "ask_problem"
+      text: "You seem troubled. Is everything alright?"
+      skill_check: null
+      emotional_impact:
+        Friendly: 1
+      conditions:
+        required_quests: {}
+      consequences: []
+      next_node: "eliza_explains_problem"
+      inner_voice_reactions: []
+
+    - id: "ignore_problem"
+      text: "Nice to meet you too. I'll let you get back to whatever you were doing."
+      skill_check: null
+      emotional_impact:
+        Neutral: 0
+      conditions:
+        required_quests: {}
+      consequences: []
+      next_node: ""
+      inner_voice_reactions:
+        - voice_type: "Empathy"
+          text: "You're walking away from someone who clearly needs help..."
+          trigger_condition: null
+          skill_requirement: 3
+
+eliza_explains_problem:
+  id: "eliza_explains_problem"
+  text: "I've lost my grandmother's locket. It's the only thing I have to remember her by. I've looked everywhere, but I can't find it."
+  speaker: "eliza"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "offer_help"
+      text: "I'd be happy to help you look for it. Where did you last see it?"
+      skill_check: null
+      emotional_impact:
+        Friendly: 2
+      conditions:
+        required_quests: {}
+      consequences:
+        - effect_type: "quest"
+          data:
+            action: "start"
+            quest_id: "missing_locket"
+      next_node: "eliza_gives_info"
+      inner_voice_reactions:
+        - voice_type: "Logic"
+          text: "This is a good opportunity to learn more about the town."
+          trigger_condition: null
+          skill_requirement: null
+
+    - id: "decline_help"
+      text: "That's unfortunate. Hope you find it soon."
+      skill_check: null
+      emotional_impact:
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []
+
+eliza_gives_info:
+  id: "eliza_gives_info"
+  text: "Thank you so much! I was last wearing it in the town square during the festival yesterday. I remember touching it near the fountain, but after that... it was just gone when I got home."
+  speaker: "eliza"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "investigate_square"
+      text: "I'll start by checking the town square then. What does the locket look like?"
+      skill_check: null
+      emotional_impact:
+        Friendly: 1
+      conditions:
+        required_quests: {}
+      consequences: []
+      next_node: "eliza_describes_locket"
+      inner_voice_reactions: []
+
+eliza_describes_locket:
+  id: "eliza_describes_locket"
+  text: "It's silver with intricate vine patterns on the outside. Inside is a small portrait of my grandmother. It's about this big and hangs on a thin silver chain. Please find it, it means the world to me."
+  speaker: "eliza"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "promise_help"
+      text: "I'll do my best to find it for you."
+      skill_check: null
+      emotional_impact:
+        Friendly: 1
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []
+
+eliza_return_locket:
+  id: "eliza_return_locket"
+  text: "Oh! Did you find anything?"
+  speaker: "eliza"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "give_locket"
+      text: "I found your locket. Here it is."
+      skill_check: null
+      emotional_impact:
+        Friendly: 5
+      conditions:
+        any_of:
+          - required_items: ["silver_locket"]
+          - worn_items: ["silver_locket"]
+          - required_items_any_inventory: ["silver_locket"]
+        required_quests:
+          "missing_locket": "InProgress"
+      consequences:
+      next_node: "eliza_grateful"
+
+    - id: "still_looking"
+      text: "Not yet, but I'm still looking."
+      skill_check: null
+      emotional_impact:
+      conditions:
+        required_quests:
+          "missing_locket": "InProgress"
+      consequences: []
+      next_node: "eliza_still_hopeful"
+      inner_voice_reactions: []
+
+eliza_grateful:
+  id: "eliza_grateful"
+  text: "Oh my goodness! You found it! Thank you, thank you so much! This means everything to me. Please, take this charm as a token of my gratitude. It's not much, but it's said to bring good fortune to those who help others."
+  speaker: "eliza"
+  emotional_state: "Friendly"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "Her joy is palpable. It feels good to have helped her."
+      trigger_condition: null
+      skill_requirement: 5
+  options:
+    - id: "accept_gratefully"
+      text: "You're welcome. I'm glad I could help you."
+      skill_check: null
+      emotional_impact:
+        Friendly: 2
+      conditions:
+        required_quests: {}
+      consequences:
+
+eliza_still_hopeful:
+  id: "eliza_still_hopeful"
+  text: "Oh... I see. Well, please keep looking. That locket means everything to me."
+  speaker: "eliza"
+  emotional_state: "Desperate"
+  inner_voice_comments: []
+  options:
+    - id: "reassure"
+      text: "Don't worry, I won't give up until I find it."
+      skill_check: null
+      emotional_impact:
+        Friendly: 1
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []
+
+# New conditional entry point for when the player has found the locket
+eliza_found_locket:
+  id: "eliza_found_locket"
+  text: "Oh! You're back! Have you found anything?"
+  speaker: "eliza"
+  emotional_state: "Hopeful"
+  conditions:
+    any_of:
+      - required_items: ["silver_locket"]
+      - worn_items: ["silver_locket"]
+      - required_items_any_inventory: ["silver_locket"]
+    required_quests:
+      "missing_locket": "InProgress"
+  options:
+    - id: "give_locket"
+      text: "I found your locket. Here it is."
+      emotional_impact:
+        Friendly: 5
+      conditions: {}
+      consequences:
+        - effect_type: "quest"
+          data:
+            action: "complete_objective"
+            quest_id: "missing_locket"
+            objective_id: "return_locket"
+        - effect_type: "item"
+          data:
+            action: "remove"
+            item_id: "silver_locket"
+        - effect_type: "quest"
+          data:
+            action: "add"
+            quest_id: "eliza_friendship"
+      next_node: "eliza_grateful"
+
+# New conditional entry point for after the player has already returned the locket
+eliza_after_locket:
+  id: "eliza_after_locket"
+  text: "Hello again! Thanks to you, I can wear my grandmother's locket every day now. I'm so grateful for your help."
+  speaker: "eliza"
+  emotional_state: "Friendly"
+  conditions:
+    quest_objective_completed:
+      quest_id: "missing_locket"
+      objective_id: "return_locket"
+  options:
+    - id: "ask_about_grandmother"
+      text: "Tell me more about your grandmother."
+      next_node: "eliza_grandmother_story"
+    - id: "friendly_goodbye"
+      text: "I'm glad I could help. Have a nice day!"
+      next_node: ""
+
+eliza_grandmother_story:
+  id: "eliza_grandmother_story"
+  text: "She was an amazing woman. Tough but kind. This locket was the only thing she had from her own mother. It's been passed down for generations."
+  speaker: "eliza"
+  emotional_state: "Nostalgic"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "Family heirlooms can carry powerful emotional connections."
+      skill_requirement: 7
+  options:
+    - id: "appreciate_story"
+      text: "That's a beautiful legacy. I'm honored to have helped preserve it."
+      emotional_impact:
+        Friendly: 1
+      next_node: ""

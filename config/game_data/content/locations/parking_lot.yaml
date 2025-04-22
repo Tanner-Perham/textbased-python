@@ -1,0 +1,34 @@
+parking_lot:
+  id: "parking_lot"
+  name: "Parking Lot"
+  description: "A modest parking area serving the warehouse district. Oil stains mark the cracked asphalt, and a few vehicles are parked haphazardly."
+  available_actions: []
+  connected_locations:
+    - "warehouse_entrance"
+  location_items:
+    - id: "car_key"
+      name: "Car Key"
+      description: "A key to a vehicle. It has a rental company tag attached."
+      categories: ["QUEST_ITEM", "TOOL"]
+      weight: 0.1
+      is_obvious: true
+    - id: "tire_iron"
+      name: "Tire Iron"
+      description: "A standard tire iron, useful for changing tires or as an impromptu weapon."
+      categories: ["TOOL"]
+      weight: 2.0
+      is_obvious: true
+      effects:
+        - attribute: "strength"
+          value: 2
+          description: "Could be used as a makeshift weapon."
+    - id: "oil_stained_rag"
+      name: "Oil-Stained Rag"
+      description: "A rag heavily stained with motor oil. It might have been used recently."
+      categories: ["EVIDENCE"]
+      weight: 0.2
+      is_obvious: false
+      perception_difficulty: 8
+      hidden_clues:
+        - "The oil stains are fresh, suggesting recent mechanical work."
+        - "There's a partial fingerprint visible in one of the oil stains." 

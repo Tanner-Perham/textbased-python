@@ -1,0 +1,27 @@
+items:
+  mysterious_key:
+    id: "mysterious_key"
+    name: "Tarnished Brass Key"
+    description: "An old brass key with no obvious markings. It's unclear what it might open."
+    categories: ["QUEST_ITEM"]
+    weight: 0.1
+    hidden_lore: "This style of key was commonly used for security deposit boxes at First National Bank during the 1980s."
+    hidden_clues:
+      - "There's a tiny engraving on the shaft that reads 'Box 447'"
+      - "The wear pattern suggests it's been used frequently, but not recently"
+      - "There are faint traces of a blue substance in the grooves"
+    hidden_usage: "The unusual size and pattern suggests it might fit older security boxes or safes rather than standard door locks."
+    perception_difficulty: 14
+    wisdom_difficulty: 11
+
+  torn_photograph:
+    id: "torn_photograph"
+    name: "Torn Photograph"
+    description: "A photograph torn in half. It shows part of a warehouse and what might be a person's arm."
+    categories: ["EVIDENCE", "QUEST_ITEM"]
+    weight: 0.05
+    hidden_clues:
+      - "In the background, barely visible, is a sign with partial text '...RBOR 7'"
+      - "The lighting and shadows suggest the photo was taken at dusk"
+      - "There's a date stamp on the back from 3 years ago"
+    perception_difficulty: 12

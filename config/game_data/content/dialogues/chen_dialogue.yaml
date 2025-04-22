@@ -1,0 +1,68 @@
+chen_default:
+  id: "chen_default"
+  text: "Can I help you? I'm just finishing my shift..."
+  speaker: "worker_chen"
+  emotional_state: "Nervous"
+  inner_voice_comments:
+    - voice_type: "Intuition"
+      text: "She keeps glancing at the loading bay. Something there she doesn't want you to see?"
+      skill_requirement: 7
+  options:
+    - id: "casual_question"
+      text: "Ask about her shift: 'Long night?'"
+      skill_check:
+        base_difficulty: 8
+        primary_skill: "empathy"
+        white_check: true
+        hidden: false
+      next_node: "chen_smalltalk"
+
+chen_smalltalk:
+  id: "chen_smalltalk"
+  text: "Yeah, you could say that. Just ready to go home and sleep. I still have a lot of work to finish before my shift ends though..."
+  speaker: "worker_chen"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "ask_about_warehouse"
+      text: "Ask if she's noticed anything unusual at the warehouse lately."
+      next_node: ""
+    - id: "offer_help"
+      text: "I could help you finish your work if you'd like."
+      skill_check:
+        base_difficulty: 8
+        primary_skill: "empathy"
+        white_check: true
+        hidden: false
+      consequences:
+        - effect_type: "quest"
+          data:
+            action: "start"
+            quest_id: "chen_shift_help"
+        - effect_type: "quest"
+          data:
+            action: "start"
+            quest_id: "chen_shift_help"
+      next_node: "chen_accepts_help"
+      inner_voice_reactions:
+        - voice_type: "Empathy"
+          text: "She seems genuinely stressed. Helping her could build trust."
+          trigger_condition: null
+          skill_requirement: 5
+
+chen_accepts_help:
+  id: "chen_accepts_help"
+  text: "Really? That would be amazing! I'm so behind on inventory checks. If you could help me with that, I'd be so grateful."
+  speaker: "worker_chen"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "start_helping"
+      text: "Let's get started then. What needs to be done?"
+      next_node: ""
+      consequences:
+        - effect_type: "quest"
+          data:
+            action: "advance"
+            quest_id: "chen_shift_help"
+            stage_id: "help_chen"

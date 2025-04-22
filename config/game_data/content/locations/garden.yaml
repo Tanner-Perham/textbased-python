@@ -1,0 +1,63 @@
+garden:
+  id: "garden"
+  name: "Garden"
+  description: "A serene public garden with winding paths, vibrant flower beds, and shady trees. A popular spot for relaxation and contemplation. Children sometimes play hide and seek among the shrubs."
+  available_actions:
+    - name: "search_garden"
+      description: "Search the garden thoroughly"
+      requirements:
+        perception: 6
+      consequences:
+        - event_type: "AddItem"
+          data:
+            id: "silver_locket"
+            name: "Silver Locket"
+            description: "A beautiful silver locket with intricate engravings. It contains a small portrait inside."
+            effects: {}
+  connected_locations:
+    - "town_square"
+    - "market"
+  location_items:
+    - id: "gardening_gloves"
+      name: "Gardening Gloves"
+      description: "A pair of sturdy gardening gloves, slightly dirty from use."
+      categories: ["WEARABLE"]
+      slot: "ACCESSORY"
+      weight: 0.2
+      style_rating: 3
+      effects:
+        - attribute: "endurance"
+          value: 1
+          description: "Protects your hands during physical work."
+      is_obvious: true
+    - id: "silver_locket"
+      name: "Silver Locket"
+      description: "A beautiful silver locket with intricate vine patterns. It seems to be the one Eliza described."
+      categories: ["QUEST_ITEM"]
+      weight: 0.1
+      is_obvious: false
+      perception_difficulty: 12
+      hidden_clues:
+        - "The locket is partially buried under a rose bush."
+        - "There's a small portrait inside that matches Eliza's description of her grandmother."
+  location_containers:
+    - id: "gardening_shed"
+      name: "Gardening Shed"
+      description: "A small wooden shed where gardening tools are stored."
+      categories: ["CONTAINER"]
+      weight: 100.0
+      capacity: 200.0
+      is_obvious: true
+      contents:
+        - id: "pruning_shears"
+          name: "Pruning Shears"
+          description: "A pair of sharp pruning shears for trimming plants."
+          categories: ["TOOL"]
+          weight: 0.5
+          is_obvious: true
+        - id: "watering_can"
+          name: "Watering Can"
+          description: "A metal watering can, half-filled with water."
+          categories: ["TOOL"]
+          weight: 2.0
+          is_obvious: true

@@ -1,0 +1,28 @@
+merchant_default:
+  id: "merchant_default"
+  text: "Fresh fruits and vegetables! Best prices in town! What can I get for you today?"
+  speaker: "Maya"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "ask_about_locket"
+      text: "I'm looking for a silver locket that was lost recently. Have you seen anything like that?"
+      conditions:
+        required_quests:
+          "missing_locket": "InProgress"
+      next_node: "merchant_locket_info"
+    - id: "browse_goods"
+      text: "Just browsing for now, thanks."
+      next_node: ""
+
+merchant_locket_info:
+  id: "merchant_locket_info"
+  text: "A silver locket? Hmm, I haven't seen one for sale anywhere, if that's what you're asking. But I did see some children playing in the garden yesterday. They seemed to be passing something shiny between them."
+  speaker: "Maya"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "thank_merchant"
+      text: "That's helpful, thank you. I'll check the garden."
+      next_node: ""
+      consequences:

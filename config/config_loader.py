@@ -192,8 +192,8 @@ class GameConfig:
             if os.path.exists(main_config_path):
                 return config_loader.load_split_config(main_config_path)
             else:
-                # If no main file, load all YAML files in the directory
-                return config_loader.load_config_directory(path)
+                # If no main file, load the content directory structure
+                return config_loader.load_content_directory(path)
         elif not os.path.exists(path):
             raise FileNotFoundError(f"Configuration file not found: {path}")
         else:
@@ -208,7 +208,7 @@ class ConfigLoader:
     def load_config(config_path: str) -> Dict:
         """Load the game configuration from a YAML file."""
         with open(config_path, 'r', encoding='utf-8') as file:
-            return yaml.safe_load(file)
+            return yaml.safe_load(file) or {}  # Return empty dict if file is empty
 
     def load_single_config(self, config_path: str) -> GameConfig:
         """Load game configuration from a single YAML file."""
@@ -259,6 +259,183 @@ class ConfigLoader:
                 merged_config.update(config_data)
         
         return self._process_config_data(merged_config, config_dir)
+
+    def load_content_directory(self, content_dir: str) -> GameConfig:
+        """Load game configuration from a structured content directory.
+        
+        Expected structure:
+            content/
+                game_settings.yaml
+                locations/
+                    location1.yaml
+                    location2.yaml
+                npcs/
+                    npc1.yaml
+                    npc2.yaml
+                quests/
+                    quest1.yaml
+                    quest2.yaml
+                items/
+                    category1.yaml
+                    category2.yaml
+                dialogues/
+                    dialogue1.yaml
+                    dialogue2.yaml
+        """
+        print(f"Loading content from directory structure: {content_dir}")
+        
+        # Initialize empty config sections
+        merged_config = {
+            "game_settings": {},
+            "locations": {},
+            "npcs": {},
+            "dialogue_trees": {},
+            "quests": {},
+            "items": {},
+            "item_sets": {},
+            "character_archetypes": {},
+            "inner_voices": [],
+            "thoughts": {}
+        }
+        
+        # Load game settings (core settings file)
+        game_settings_path = os.path.join(content_dir, "game_settings.yaml")
+        if os.path.exists(game_settings_path):
+            print(f"Loading game settings from {game_settings_path}")
+            settings_data = self.load_config(game_settings_path)
+            if "game_settings" in settings_data:
+                merged_config["game_settings"] = settings_data["game_settings"]
+            else:
+                # The file might contain the settings directly without a "game_settings" key
+                merged_config["game_settings"] = settings_data
+        
+        # Load locations (one per file)
+        locations_dir = os.path.join(content_dir, "content/locations/")
+        if os.path.exists(locations_dir):
+            print(f"Loading locations from {locations_dir}")
+            location_files = glob.glob(os.path.join(locations_dir, "*.yaml")) + glob.glob(os.path.join(locations_dir, "*.yml"))
+            
+            for loc_file in location_files:
+                loc_data = self.load_config(loc_file)
+                # Location files might have a single location or multiple locations
+                if loc_data:
+                    if "id" in loc_data:
+                        # Single location format
+                        loc_id = loc_data["id"]
+                        merged_config["locations"][loc_id] = loc_data
+                    else:
+                        # Multiple locations format or nested under a key
+                        for key, value in loc_data.items():
+                            if isinstance(value, dict) and "id" in value:
+                                merged_config["locations"][key] = value
+        
+        # Load NPCs (one per file)
+        npcs_dir = os.path.join(content_dir, "content/npcs/")
+        if os.path.exists(npcs_dir):
+            print(f"Loading NPCs from {npcs_dir}")
+            npc_files = glob.glob(os.path.join(npcs_dir, "*.yaml")) + glob.glob(os.path.join(npcs_dir, "*.yml"))
+            
+            for npc_file in npc_files:
+                npc_data = self.load_config(npc_file)
+                if npc_data:
+                    if "id" in npc_data:
+                        # Single NPC format
+                        npc_id = npc_data["id"]
+                        merged_config["npcs"][npc_id] = npc_data
+                    else:
+                        # Multiple NPCs format or nested under a key
+                        for key, value in npc_data.items():
+                            if isinstance(value, dict) and "id" in value:
+                                merged_config["npcs"][key] = value
+        
+        # Load dialogues (one file per NPC or dialogue tree)
+        dialogues_dir = os.path.join(content_dir, "content/dialogues/")
+        if os.path.exists(dialogues_dir):
+            print(f"Loading dialogues from {dialogues_dir}")
+            dialogue_files = glob.glob(os.path.join(dialogues_dir, "*.yaml")) + glob.glob(os.path.join(dialogues_dir, "*.yml"))
+            
+            for dialogue_file in dialogue_files:
+                dialogue_data = self.load_config(dialogue_file)
+                if dialogue_data:
+                    # Each dialogue file can contain multiple dialogue nodes
+                    for node_id, node_data in dialogue_data.items():
+                        if isinstance(node_data, dict):
+                            merged_config["dialogue_trees"][node_id] = node_data
+        
+        # Load quests (one per file)
+        quests_dir = os.path.join(content_dir, "content/quests/")
+        if os.path.exists(quests_dir):
+            print(f"Loading quests from {quests_dir}")
+            quest_files = glob.glob(os.path.join(quests_dir, "*.yaml")) + glob.glob(os.path.join(quests_dir, "*.yml"))
+            
+            for quest_file in quest_files:
+                quest_data = self.load_config(quest_file)
+                if quest_data:
+                    if "id" in quest_data:
+                        # Single quest format
+                        quest_id = quest_data["id"]
+                        merged_config["quests"][quest_id] = quest_data
+                    else:
+                        # Multiple quests format or nested under a key
+                        for key, value in quest_data.items():
+                            if isinstance(value, dict) and "id" in value:
+                                merged_config["quests"][key] = value
+        
+        # Load items (by category)
+        items_dir = os.path.join(content_dir, "content/items/")
+        if os.path.exists(items_dir):
+            print(f"Loading items from {items_dir}")
+            item_files = glob.glob(os.path.join(items_dir, "*.yaml")) + glob.glob(os.path.join(items_dir, "*.yml"))
+            
+            for item_file in item_files:
+                item_data = self.load_config(item_file)
+                if item_data:
+                    # Check if this is an item sets file
+                    if "item_sets" in item_data:
+                        merged_config["item_sets"].update(item_data["item_sets"])
+                    
+                    # Check if this is an items file
+                    if "items" in item_data:
+                        merged_config["items"].update(item_data["items"])
+                    else:
+                        # File may contain items directly without an "items" key
+                        for key, value in item_data.items():
+                            if isinstance(value, dict) and "name" in value and "description" in value:
+                                # This looks like an item definition
+                                merged_config["items"][key] = value
+        
+        # Load character archetypes if they exist
+        archetypes_path = os.path.join(content_dir, "content/character_archetypes.yaml")
+        if os.path.exists(archetypes_path):
+            print(f"Loading character archetypes from {archetypes_path}")
+            archetypes_data = self.load_config(archetypes_path)
+            if "character_archetypes" in archetypes_data:
+                merged_config["character_archetypes"] = archetypes_data["character_archetypes"]
+            else:
+                # The file might contain archetypes directly
+                merged_config["character_archetypes"] = archetypes_data
+        
+        # Load inner voices if they exist
+        inner_voices_path = os.path.join(content_dir, "content/inner_voices.yaml")
+        if os.path.exists(inner_voices_path):
+            print(f"Loading inner voices from {inner_voices_path}")
+            inner_voices_data = self.load_config(inner_voices_path)
+            if "inner_voices" in inner_voices_data:
+                merged_config["inner_voices"] = inner_voices_data["inner_voices"]
+            else:
+                merged_config["inner_voices"] = inner_voices_data
+        
+        # Load thoughts if they exist
+        thoughts_path = os.path.join(content_dir, "content/thoughts.yaml")
+        if os.path.exists(thoughts_path):
+            print(f"Loading thoughts from {thoughts_path}")
+            thoughts_data = self.load_config(thoughts_path)
+            if "thoughts" in thoughts_data:
+                merged_config["thoughts"] = thoughts_data["thoughts"]
+            else:
+                merged_config["thoughts"] = thoughts_data
+        
+        return self._process_config_data(merged_config, content_dir)
 
     def _process_config_data(self, config_data: Dict, base_dir: str) -> GameConfig:
         """Process the loaded configuration data into a GameConfig object."""

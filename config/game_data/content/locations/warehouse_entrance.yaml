@@ -1,0 +1,62 @@
+warehouse_entrance:
+  id: "warehouse_entrance"
+  name: "Warehouse Entrance"
+  description: "A imposing metal door stands before you, its surface marked by years of use. The surrounding concrete walls are covered in faded graffiti. The air smells of rust and distant sea salt."
+  available_actions:
+    - name: "inspect_door"
+      description: "Examine the warehouse door closely"
+      requirements:
+        perception: 8
+      consequences:
+        - event_type: "AddClue"
+          data:
+            id: "scratch_marks"
+            description: "Recent scratch marks around the lock suggest forced entry"
+            related_quest: "main_investigation"
+            discovered: false
+  connected_locations:
+    - "warehouse_office"
+    - "parking_lot"
+    - "town_square" # Added connection to town for quest accessibility
+  location_items:
+    - id: "rusty_key"
+      name: "Rusty Key"
+      description: "An old, rusty key. It's unclear what it might open."
+      categories: ["QUEST_ITEM"]
+      weight: 0.1
+      is_obvious: true
+    - id: "discarded_glove"
+      name: "Discarded Work Glove"
+      description: "A heavy-duty work glove, stained with what looks like oil or grease."
+      categories: ["WEARABLE"]
+      slot: "ACCESSORY"
+      weight: 0.2
+      style_rating: 1
+      is_obvious: true
+    - id: "hidden_lockpick"
+      name: "Professional Lockpick"
+      description: "A high-quality lockpick that someone tried to hide."
+      categories: ["TOOL"]
+      weight: 0.1
+      is_obvious: false
+      perception_difficulty: 12
+      hidden_clues:
+        - "The lockpick appears to be recently used."
+        - "There are scratches on it matching the marks on the warehouse door."
+  location_containers:
+    - id: "trash_bin"
+      name: "Metal Trash Bin"
+      description: "A large metal trash bin. It smells terrible, but might contain useful items."
+      categories: ["CONTAINER"]
+      weight: 8.0
+      capacity: 30.0
+      is_obvious: true
+      contents:
+        - id: "crumpled_note"
+          name: "Crumpled Note"
+          description: "A note that's been crumpled up and thrown away. It contains partial delivery instructions."
+          categories: ["EVIDENCE", "QUEST_ITEM"]
+          weight: 0.1
+          is_obvious: true
+          hidden_clues:
+            - "The handwriting matches entries in the security logbook."

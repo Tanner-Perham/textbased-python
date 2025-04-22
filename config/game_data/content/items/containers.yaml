@@ -1,0 +1,9 @@
+items:
+  toolbox:
+    id: "toolbox"
+    name: "Detective's Toolbox"
+    description: "A compact box containing various investigation tools."
+    categories: ["CONTAINER"]
+    weight: 2.0
+    capacity: 8.0
+    allowed_categories: ["TOOL"]

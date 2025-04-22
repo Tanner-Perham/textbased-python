@@ -1,0 +1,8 @@
+title: "Mystery at Warehouse 13"
+starting_location: "warehouse_entrance"
+default_time: "19:00"
+starting_inventory:
+  - id: "notebook"
+    quantity: 1
+  - id: "flashlight"
+    quantity: 1 

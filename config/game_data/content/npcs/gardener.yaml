@@ -1,0 +1,7 @@
+gardener:
+  id: "gardener"
+  name: "Old Tom"
+  dialogue_entry_point: "gardener_default"
+  disposition: 55
+  location: "garden"
+  gender: "male"

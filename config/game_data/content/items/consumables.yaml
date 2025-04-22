@@ -1,0 +1,78 @@
+items:
+  coffee:
+    name: "Hot Coffee"
+    description: "A steaming cup of black coffee, the detective's best friend."
+    categories:
+      - CONSUMABLE
+    weight: 0.3
+    effects:
+      - attribute: "energy"
+        value: 20
+        duration: 30
+        description: "Temporarily boosts your energy level."
+      - attribute: "perception"
+        value: 5
+        duration: 15
+        description: "Temporarily increases your perception."
+    stackable: true
+    quantity: 1
+    
+  notepad:
+    name: "Detective's Notepad"
+    description: "A small notepad for recording clues and leads."
+    categories:
+      - TOOL
+    weight: 0.2
+    effects:
+      - attribute: "memory"
+        value: 10
+        description: "Helps you remember important details about the case."
+    stackable: false
+    
+  flashlight:
+    name: "Tactical Flashlight"
+    description: "A high-powered flashlight perfect for illuminating dark areas."
+    categories:
+      - TOOL
+    weight: 0.5
+    effects:
+      - attribute: "search_radius"
+        value: 15
+        description: "Increases your ability to find hidden objects in dark places."
+    stackable: false 
+
+  coffee:
+    id: "coffee"
+    name: "Thermos of Coffee"
+    description: "Hot, black coffee. Helps keep you alert."
+    categories: ["CONSUMABLE"]
+    weight: 0.5
+    stackable: true
+    effects:
+      - attribute: "perception"
+        value: 1
+        duration: 30
+        description: "The caffeine helps you stay alert."
+      - attribute: "composure"
+        value: -1
+        duration: 30
+        description: "Makes you a bit jittery."
+    hidden_usage: "You've found that taking a few sips right before questioning a suspect gives you just the right edge of alertness without the full jitters."
+    wisdom_difficulty: 6
+
+  painkillers:
+    id: "painkillers"
+    name: "Painkillers"
+    description: "Generic over-the-counter painkillers."
+    categories: ["CONSUMABLE"]
+    weight: 0.1
+    stackable: true
+    effects:
+      - attribute: "endurance"
+        value: 2
+        duration: 60
+        description: "Helps you push through the pain."
+      - attribute: "perception"
+        value: -1
+        duration: 60
+        description: "Slightly dulls your senses."

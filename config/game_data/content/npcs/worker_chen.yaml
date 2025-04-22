@@ -1,0 +1,7 @@
+worker_chen:
+  id: "worker_chen"
+  name: "Sarah Chen"
+  dialogue_entry_point: "chen_intro"
+  disposition: 65
+  location: "warehouse_entrance"
+  gender: "female"

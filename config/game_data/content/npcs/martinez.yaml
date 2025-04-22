@@ -1,0 +1,6 @@
+id: "guard_martinez"
+name: "Detective Martinez"
+dialogue_entry_point: "martinez_intro"
+disposition: 50
+location: "warehouse_office"
+gender: "male" 

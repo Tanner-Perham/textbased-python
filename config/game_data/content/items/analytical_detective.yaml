@@ -1,0 +1,33 @@
+items:
+  magnifying_glass:
+    id: "magnifying_glass"
+    name: "Detective's Magnifying Glass"
+    description: "A high-quality magnifying glass for examining evidence in detail."
+    categories: ["TOOL"]
+    weight: 0.2
+    effects:
+      - attribute: "perception"
+        value: 2
+        description: "Allows you to see small details that would otherwise be missed."
+      - attribute: "logic"
+        value: 1
+        description: "Helps you analyze evidence methodically."
+    hidden_lore: "This magnifying glass was handed down from Detective Morrison, known for solving the infamous Series Six murders using nothing but trace evidence analysis."
+
+  crime_scene_kit:
+    id: "crime_scene_kit"
+    name: "Forensic Analysis Kit"
+    description: "A comprehensive kit containing tools for collecting and analyzing evidence at crime scenes."
+    categories: ["TOOL", "CONTAINER"]
+    weight: 1.5
+    capacity: 3.0
+    effects:
+      - attribute: "logic"
+        value: 2
+        description: "Provides scientific tools for evidence analysis."
+      - attribute: "memory"
+        value: 1
+        description: "The systematic approach helps catalog details for later recall."
+    hidden_usage: "The kit includes specialized reagents that can reveal latent fingerprints and chemical traces invisible to the naked eye."
+    perception_difficulty: 12
+    wisdom_difficulty: 8

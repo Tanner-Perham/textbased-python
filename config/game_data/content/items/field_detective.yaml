@@ -1,0 +1,54 @@
+items:
+  sturdy_boots:
+    id: "sturdy_boots"
+    name: "Tactical Field Boots"
+    description: "Tough, waterproof boots with excellent traction and ankle support."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 1.4
+    style_rating: 4
+    effects:
+      - attribute: "agility"
+        value: 2
+        description: "Provides excellent grip and support for running and climbing."
+      - attribute: "endurance"
+        value: 1
+        description: "Reduces foot fatigue during long periods of standing or walking."
+      - attribute: "stealth"
+        value: -1
+        description: "The heavy soles can make some noise on hard surfaces."
+    set_id: "field_set"
+
+  weatherproof_jacket:
+    id: "weatherproof_jacket"
+    name: "All-Weather Field Jacket"
+    description: "A durable jacket that protects against rain, wind, and cold while providing ample pocket space."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.7
+    style_rating: 5
+    effects:
+      - attribute: "endurance"
+        value: 2
+        description: "Protects against the elements, allowing you to work in harsh conditions."
+      - attribute: "composure"
+        value: 1
+        description: "The comfort it provides helps you stay focused in stressful situations."
+    set_id: "field_set"
+    hidden_clues:
+      - "The inside pocket has a waterproof lining perfect for storing evidence in wet conditions."
+
+  first_aid_kit:
+    id: "first_aid_kit"
+    name: "Tactical First Aid Kit"
+    description: "A compact but comprehensive first aid kit for emergency treatment in the field."
+    categories: ["TOOL", "CONSUMABLE"]
+    weight: 0.8
+    stackable: true
+    quantity: 1
+    effects:
+      - attribute: "composure"
+        value: 1
+        description: "Having medical supplies on hand helps you stay calm in emergencies."
+    hidden_usage: "Contains specialized items for treating wounds that aren't in standard first aid kits."
+    perception_difficulty: 8 

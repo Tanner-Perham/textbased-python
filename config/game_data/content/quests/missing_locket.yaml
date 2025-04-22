@@ -1,0 +1,68 @@
+missing_locket:
+  id: "missing_locket"
+  title: "The Missing Locket"
+  description: "Help Eliza find her missing silver locket."
+  short_description: "Find Eliza's lost locket"
+  importance: "Optional"
+  is_main_quest: false
+  is_hidden: false
+  status: "NotStarted"
+  stages:
+    - id: "search_town"
+      title: "Search the Town"
+      description: "Look for clues about the missing locket."
+      status: "NotStarted"
+      objectives:
+        - id: "talk_to_eliza"
+          description: "Get more information from Eliza about the locket"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "locket_description"
+                description: "A silver locket with a family portrait inside"
+                related_quest: "missing_locket"
+                discovered: true
+        - id: "search_fountain"
+          description: "Search around the town square fountain"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "fountain_clue"
+                description: "Found a thread that might be from the locket's chain"
+                related_quest: "missing_locket"
+                discovered: true
+      notification_text: "You've started searching for the missing locket."
+    - id: "find_locket"
+      title: "Find the Locket"
+      description: "Follow the clues to find the missing locket."
+      status: "NotStarted"
+      objectives:
+        - id: "search_garden"
+          description: "Search the garden for the locket"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddItem"
+              data:
+                id: "silver_locket"
+                name: "Silver Locket"
+                description: "A beautiful silver locket with intricate engravings"
+                effects: {}
+            - event_type: "CompleteObjective"
+              data:
+                quest_id: "missing_locket"
+                objective_id: "search_garden"
+        - id: "return_locket"
+          description: "Return the locket to Eliza"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "CompleteQuest"
+              data:
+                quest_id: "missing_locket"
+                reward: "eliza_gratitude"
+      notification_text: "You've found the missing locket!"

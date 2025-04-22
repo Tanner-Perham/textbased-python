@@ -1,0 +1,88 @@
+shopkeeper_default:
+  id: "shopkeeper_default"
+  text: "Welcome to my shop. Looking for something specific today?"
+  speaker: "shopkeeper"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "ask_about_locket"
+      text: "I'm looking for a silver locket. Have you seen anyone with one recently?"
+      skill_check: null
+      emotional_impact:
+        Neutral: 0
+      conditions:
+        required_quests:
+          "missing_locket": "InProgress"
+      consequences:
+      next_node: "shopkeeper_info"
+      inner_voice_reactions: []
+
+    - id: "just_browsing"
+      text: "Just browsing, thanks."
+      skill_check: null
+      emotional_impact:
+        Neutral: 0
+      conditions:
+        required_quests: {}
+      consequences: []
+      next_node: ""
+      inner_voice_reactions: []
+
+shopkeeper_info:
+  id: "shopkeeper_info"
+  text: "A silver locket, hmm? Now that you mention it, I did see young Tim playing with something shiny near the garden yesterday. Could've been a locket."
+  speaker: "shopkeeper"
+  emotional_state: "Neutral"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "This could be a good lead. I should check the garden."
+      trigger_condition: null
+      skill_requirement: null
+  options:
+    - id: "thank_info"
+      text: "Thank you, that's helpful. I'll check the garden."
+      skill_check: null
+      emotional_impact:
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []
+
+    - id: "doubt_info"
+      text: "Are you sure? That doesn't sound very reliable."
+      skill_check: null
+      emotional_impact:
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: "shopkeeper_annoyed"
+      inner_voice_reactions: []
+
+shopkeeper_annoyed:
+  id: "shopkeeper_annoyed"
+  text: "Well, it's all I know. Take it or leave it."
+  speaker: "shopkeeper"
+  emotional_state: "Angry"
+  inner_voice_comments: []
+  options:
+    - id: "apologize"
+      text: "Sorry, I appreciate the help. I'll check the garden."
+      skill_check: null
+      emotional_impact:
+        Neutral: 0
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []
+
+    - id: "leave_annoyed"
+      text: "Fine, I'll figure it out myself."
+      skill_check: null
+      emotional_impact:
+      conditions:
+        required_quests: {}
+      consequences:
+      next_node: ""
+      inner_voice_reactions: []

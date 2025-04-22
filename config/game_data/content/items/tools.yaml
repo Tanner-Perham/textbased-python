@@ -1,0 +1,32 @@
+notebook:
+  id: "notebook"
+  name: "Detective's Notebook"
+  description: "A well-worn notebook filled with case notes and observations."
+  categories: ["TOOL"]
+  weight: 0.3
+  effects:
+    - attribute: "logic"
+      value: 1
+      description: "Helps organize your thoughts and observations."
+
+pen:
+  id: "pen"
+  name: "Reliable Pen"
+  description: "A sturdy pen that's never run out of ink when you needed it most."
+  categories: ["TOOL"]
+  weight: 0.05
+  effects:
+    - attribute: "perception"
+      value: 1
+      description: "Helps you focus on details when taking notes."
+
+flashlight:
+  id: "flashlight"
+  name: "Police Flashlight"
+  description: "A heavy-duty flashlight with a strong beam. Perfect for dark corners and night work."
+  categories: ["TOOL"] 
+  weight: 0.5
+  effects:
+    - attribute: "perception"
+      value: 2
+      description: "Illuminates dark areas and helps spot details."

@@ -1,0 +1,38 @@
+gardener_default:
+  id: "gardener_default"
+  text: "Lovely day to be enjoying the garden, isn't it? The roses are particularly fragrant this season."
+  speaker: "gardener"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "ask_about_locket"
+      text: "I'm looking for a silver locket. Have you seen any children playing with something shiny here recently?"
+      conditions:
+        required_quests:
+          "missing_locket": "InProgress"
+      next_node: "gardener_locket_info"
+    - id: "chat_gardens"
+      text: "The garden is beautiful. How long have you worked here?"
+      next_node: "gardener_chat"
+
+gardener_locket_info:
+  id: "gardener_locket_info"
+  text: "A silver locket? Yes, I did see some children playing over by the east garden beds yesterday. They were digging around in the soil. I had to shoo them away before they damaged my petunias."
+  speaker: "gardener"
+  emotional_state: "Friendly"
+  inner_voice_comments: []
+  options:
+    - id: "thank_gardener"
+      text: "Thanks for the information. I'll check over there."
+      next_node: ""
+
+gardener_chat:
+  id: "gardener_chat"
+  text: "Oh, going on twenty years now. Started when my knees were better, that's for sure!"
+  speaker: "gardener"
+  emotional_state: "Neutral"
+  inner_voice_comments: []
+  options:
+    - id: "end_chat"
+      text: "Well, it shows. The garden is magnificent."
+      next_node: ""

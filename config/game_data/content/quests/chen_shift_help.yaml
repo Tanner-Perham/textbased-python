@@ -1,0 +1,47 @@
+chen_shift_help:
+  id: "chen_shift_help"
+  title: "Help Sarah Chen"
+  description: "Sarah Chen seems stressed about her shift. Maybe you can help her out."
+  short_description: "Help Sarah with her shift"
+  importance: "Optional"
+  is_main_quest: false
+  is_hidden: false
+  status: "NotStarted"
+  related_npcs: ["worker_chen"]
+  stages:
+    - id: "talk_to_chen"
+      title: "Talk to Sarah"
+      description: "Find out what's bothering Sarah about her shift."
+      status: "NotStarted"
+      objectives:
+        - id: "ask_about_shift"
+          description: "Talk to Sarah about her shift"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "AddClue"
+              data:
+                id: "chen_shift_problem"
+                description: "Sarah is worried about completing her shift on time"
+                related_quest: "chen_shift_help"
+                discovered: true
+      notification_text: "You've learned about Sarah's shift problems."
+    - id: "help_chen"
+      title: "Help Sarah"
+      description: "Assist Sarah with her shift tasks."
+      status: "NotStarted"
+      objectives:
+        - id: "complete_tasks"
+          description: "Help Sarah complete her shift tasks"
+          is_completed: false
+          is_optional: false
+          completion_events:
+            - event_type: "CompleteQuest"
+              data:
+                quest_id: "chen_shift_help"
+                reward: "chen_gratitude"
+      notification_text: "You've helped Sarah complete her shift!"
+  rewards:
+    relationship_changes:
+      worker_chen: 10
+    experience: 50 

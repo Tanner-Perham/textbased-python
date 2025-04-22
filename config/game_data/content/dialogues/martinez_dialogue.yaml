@@ -1,0 +1,529 @@
+martinez_intro:
+  id: "martinez_intro"
+  text: "What are you doing here? This is a restricted area."
+  speaker: "guard_martinez"
+  emotional_state: "Suspicious"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "His posture is defensive, but there's worry in his eyes. Something's eating at him."
+      skill_requirement: 8
+    - voice_type: "Authority"
+      text: "He's testing your authority. Stand your ground."
+      skill_requirement: 7
+  options:
+    - id: "show_badge"
+      text: "Show your badge: 'Detective from the 41st precinct. We received reports of suspicious activity.'"
+      skill_check:
+        base_difficulty: 12
+        primary_skill: "authority"
+        supporting_skills:
+          - ["composure", 0.5]
+        emotional_modifiers:
+          Suspicious: -2
+        white_check: false
+        hidden: false
+      emotional_impact:
+        Friendly: 2
+        Suspicious: -3
+      conditions:
+        any_of:
+          - required_items: ["police_badge"]
+          - worn_items: ["police_badge"]
+          - required_items_any_inventory: ["police_badge"]
+        required_skills:
+          authority: 8
+      next_node: "martinez_cooperative"
+
+    - id: "casual_approach"
+      text: "Play it casual: 'Just looking around. Noticed some unusual activity in the area.'"
+      skill_check:
+        base_difficulty: 10
+        primary_skill: "suggestion"
+        supporting_skills:
+          - ["empathy", 0.3]
+        emotional_modifiers:
+          Suspicious: -1
+        white_check: true
+        hidden: false
+      next_node: ""
+      success_node: "martinez_cooperative"
+      failure_node: "martinez_suspicious"
+      critical_success_node: "martinez_impressed"
+      critical_failure_node: "martinez_attacks"
+
+    - id: "test"
+      text: "A test dialogue option."
+      skill_check:
+        base_difficulty: 10
+        primary_skill: "suggestion"
+        supporting_skills:
+          - ["empathy", 0.3]
+        emotional_modifiers:
+          Suspicious: -1
+        white_check: true
+        hidden: false
+      next_node: "martinez_cooperative"
+
+martinez_cooperative:
+  id: "martinez_cooperative"
+  text: "Oh, thank god. Look, detective, something weird's been going on here. The night shift logs don't add up, and I found this yesterday..."
+  speaker: "guard_martinez"
+  emotional_state: "Friendly"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "He's been gathering evidence. This could be valuable for the investigation."
+      skill_requirement: 6
+  options:
+    - id: "examine_evidence"
+      text: "Examine what he's found"
+      next_node: "martinez_evidence"
+
+martinez_suspicious:
+  id: "martinez_suspicious"
+  text: "Nice try, criminal!"
+  speaker: "Officer Martinez"
+  emotional_state: "Angry"
+  inner_voice_comments: []
+  options: []
+
+martinez_evidence:
+  id: "martinez_evidence"
+  text: "Here, take a look at this manifest. The numbers don't match our inventory."
+  speaker: "guard_martinez"
+  emotional_state: "Nervous"
+  inner_voice_comments: []
+  options:
+    - id: "thank_martinez"
+      text: "Thank you, this is valuable evidence."
+      next_node: ""
+      consequences:
+      - effect_type: "quest"
+        data:
+          action: "complete_objective"
+          quest_id: "main_investigation"
+          objective_id: "initial_investigation"
+      - effect_type: "clue"
+        data:
+          action: "add"
+          clue_id: "warehouse_manifest"
+          description: "A manifest showing inventory discrepancies at the warehouse"
+
+# New conditional friendly entry point for Officer Martinez
+martinez_friendly:
+  id: "martinez_friendly"
+  text: "Hey there, detective! Good to see you again. What brings you back to our neck of the woods?"
+  speaker: "guard_martinez"
+  emotional_state: "Friendly"
+  conditions:
+    npc_relationship_value: 
+      npc_id: "guard_martinez"
+      min_value: 70
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "He's genuinely happy to see you. Your previous interactions have built trust."
+      skill_requirement: 5
+  options:
+    - id: "friendly_chat"
+      text: "Just checking in. How have things been since I was last here?"
+      next_node: "martinez_friendly_chat"
+    - id: "official_business"
+      text: "I'm here on official business. Anything unusual happen recently?"
+      next_node: "martinez_reports"
+
+martinez_friendly_chat:
+  id: "martinez_friendly_chat"
+  text: "Much better since you helped us sort out that inventory discrepancy. Management actually implemented some of your suggestions for security. Makes my job a lot easier."
+  speaker: "guard_martinez"
+  emotional_state: "Relaxed"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "This is a good opportunity to gather information informally."
+      skill_requirement: 6
+  options:
+    - id: "ask_personal"
+      text: "Glad to hear it. How's the family doing?"
+      emotional_impact:
+        Friendly: 1
+      next_node: "martinez_personal"
+    - id: "transition_to_business"
+      text: "Good to hear. Actually, I was hoping to ask about something specific."
+      next_node: "martinez_reports"
+
+martinez_personal:
+  id: "martinez_personal"
+  text: "They're good, thanks for asking! My daughter just started college - first one in the family. Pretty proud of her."
+  speaker: "guard_martinez"
+  emotional_state: "Proud"
+  options:
+    - id: "congratulate"
+      text: "That's fantastic! What's she studying?"
+      emotional_impact:
+        Friendly: 2
+      next_node: "martinez_personal_followup"
+    - id: "transition_to_business"
+      text: "That's great to hear. Listen, I actually came by to ask about something specific."
+      next_node: "martinez_reports"
+
+martinez_personal_followup:
+  id: "martinez_personal_followup"
+  text: "Criminal Justice, if you can believe it! Says she wants to be a detective like you someday. Your work here made quite an impression on her."
+  speaker: "guard_martinez"
+  emotional_state: "Proud"
+  options:
+    - id: "offer_mentorship"
+      text: "I'd be happy to talk with her sometime about the job. Maybe give her some pointers."
+      emotional_impact:
+        Friendly: 3
+      next_node: "martinez_grateful"
+    - id: "transition_to_business"
+      text: "That's flattering. By the way, I came here about a case I'm working on."
+      next_node: "martinez_reports"
+
+martinez_grateful:
+  id: "martinez_grateful"
+  text: "Really? That would mean the world to her. And to me. Thanks, detective. Now, what can I help you with today?"
+  speaker: "guard_martinez"
+  emotional_state: "Grateful"
+  options:
+    - id: "explain_visit"
+      text: "I'm investigating some suspicious activity in the area. Notice anything unusual lately?"
+      next_node: "martinez_reports"
+
+martinez_reports:
+  id: "martinez_reports"
+  text: "Well, now that you mention it, there have been some strange deliveries after hours. Not logged in the system. I started keeping my own records after what happened last time."
+  speaker: "guard_martinez"
+  emotional_state: "Helpful"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "He's been proactive about security issues. This could be valuable intelligence."
+      skill_requirement: 7
+  options:
+    - id: "ask_for_records"
+      text: "Can I see these records? They might be important for my investigation."
+      next_node: "martinez_gives_evidence"
+      
+martinez_gives_evidence:
+  id: "martinez_gives_evidence"
+  text: "Sure thing. Here's my personal log. I've highlighted the suspicious entries."
+  speaker: "guard_martinez"
+  emotional_state: "Helpful"
+  options:
+    - id: "thank_for_help"
+      text: "Thanks for your help, Martinez. This could be a big break in the case."
+      emotional_impact:
+        Friendly: 2
+      next_node: ""
+      consequences:
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "martinez_delivery_log"
+            description: "Officer Martinez's personal log of suspicious after-hours deliveries"
+            
+# New entry point for when player has already gone through the evidence
+martinez_quest_complete:
+  id: "martinez_quest_complete"
+  text: "Detective! Back so soon? Have you made progress on the case?"
+  speaker: "guard_martinez"
+  emotional_state: "Curious"
+  conditions:
+    quest_objective_completed:
+      quest_id: "main_investigation"
+      objective_id: "initial_investigation"
+  options:
+    - id: "share_progress"
+      text: "We're getting closer. Your evidence has been very helpful."
+      emotional_impact:
+        Friendly: 1
+      next_node: "martinez_pleased"
+    - id: "ask_more_questions"
+      text: "I have a few more questions about those deliveries you mentioned."
+      next_node: "martinez_more_info"
+      
+martinez_pleased:
+  id: "martinez_pleased"
+  text: "Glad I could help. Let me know if you need anything else."
+  speaker: "guard_martinez"
+  emotional_state: "Pleased"
+  options:
+    - id: "goodbye"
+      text: "Will do. Thanks again."
+      next_node: ""
+
+martinez_more_info:
+  id: "martinez_more_info"
+  text: "Of course. What else would you like to know?"
+  speaker: "guard_martinez"
+  emotional_state: "Helpful"
+  options:
+    - id: "ask_about_drivers"
+      text: "Did you notice anything about the delivery drivers? Any distinctive features?"
+      next_node: "martinez_describes_drivers"
+    - id: "ask_about_timing"
+      text: "Is there a pattern to when these deliveries happen?"
+      next_node: "martinez_timing_info"
+      
+martinez_describes_drivers:
+  id: "martinez_describes_drivers"
+  text: "Now that you mention it, they always wear caps pulled down low. And they use a different truck each time - but I noticed they all have the same parking sticker on the windshield."
+  speaker: "guard_martinez"
+  emotional_state: "Thoughtful"
+  options:
+    - id: "thank_for_detail"
+      text: "That's exactly the kind of detail I needed. Thanks for your observant eye."
+      emotional_impact:
+        Friendly: 2
+      next_node: ""
+      consequences:
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "delivery_truck_sticker"
+            description: "All suspicious deliveries use trucks with the same parking sticker"
+            
+martinez_timing_info:
+  id: "martinez_timing_info"
+  text: "They always come after midnight, usually around 2AM. And only on weekdays, never weekends."
+  speaker: "guard_martinez"
+  emotional_state: "Helpful"
+  options:
+    - id: "thank_for_info"
+      text: "That's valuable information. I might need to stake out the place."
+      next_node: ""
+      consequences:
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "delivery_timing"
+            description: "Suspicious deliveries occur at 2AM on weekdays only"
+
+martinez_impressed:
+  id: "martinez_impressed"
+  text: "Wow, I completely believe you! In fact, I've been noticing suspicious activity too. Here, I've been keeping detailed notes that might help your investigation."
+  speaker: "guard_martinez"
+  emotional_state: "Excited"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "That was an amazing performance. He's not just convinced - he's eager to help."
+      skill_requirement: 3
+  options:
+    - id: "accept_notes"
+      text: "These are incredibly detailed. Thank you, this is exactly what I needed."
+      next_node: ""
+      consequences:
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: 15
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "martinez_detailed_notes"
+            description: "Detailed notes about suspicious warehouse activities collected by Officer Martinez"
+        - effect_type: "quest"
+          data:
+            action: "complete_objective"
+            quest_id: "main_investigation" 
+            objective_id: "gather_initial_evidence"
+
+martinez_attacks:
+  id: "martinez_attacks"
+  text: "That's the worst lie I've ever heard! You're clearly involved with the smuggling operation! Put your hands up NOW!"
+  speaker: "guard_martinez"
+  emotional_state: "Furious"
+  inner_voice_comments:
+    - voice_type: "Composure"
+      text: "This situation has escalated dangerously. Stay calm and don't make sudden movements."
+      skill_requirement: 4
+  options:
+    - id: "show_badge_quickly"
+      text: "Wait! I'm a detective! *quickly show badge*"
+      skill_check:
+        base_difficulty: 8
+        primary_skill: "composure"
+        supporting_skills:
+          - ["agility", 0.5]
+        white_check: false
+      conditions:
+        any_of:
+          - required_items: ["police_badge"]
+          - worn_items: ["police_badge"] 
+          - required_items_any_inventory: ["police_badge"]
+      next_node: "martinez_embarrassed"
+    - id: "surrender"
+      text: "I'm cooperating. Let's talk this through calmly."
+      next_node: "martinez_detains_you"
+      consequences:
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: -10
+
+martinez_embarrassed:
+  id: "martinez_embarrassed"
+  text: "Oh god, I'm so sorry Detective! I completely overreacted. Please don't report this incident. I've been on edge with all these security breaches."
+  speaker: "guard_martinez"
+  emotional_state: "Embarrassed"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "He's genuinely mortified and afraid for his job."
+      skill_requirement: 5
+  options:
+    - id: "forgive"
+      text: "It's fine, Officer Martinez. Security is important. Why don't we start over?"
+      emotional_impact:
+        Friendly: 1
+      next_node: "martinez_relieved"
+    - id: "stern"
+      text: "That was extremely unprofessional. I'll overlook it this time, but I need information now."
+      emotional_impact:
+        Nervous: 2
+      next_node: "martinez_nervous_info"
+
+martinez_detains_you:
+  id: "martinez_detains_you"
+  text: "Down on the ground! Now! *He calls for backup* Central, I've apprehended a suspicious individual attempting to access the warehouse..."
+  speaker: "guard_martinez"
+  emotional_state: "Alert"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "This is going to be awkward to explain to the precinct."
+      skill_requirement: 3
+  options:
+    - id: "wait_for_backup"
+      text: "Comply and wait for backup to arrive to sort this out"
+      next_node: "martinez_backup_arrives"
+      consequences:
+        - effect_type: "time"
+          data:
+            hours: 3
+        - effect_type: "relationship"
+          data:
+            npc_id: "chief_wilson"
+            value: -5
+
+martinez_relieved:
+  id: "martinez_relieved"
+  text: "Thank you, Detective. I really appreciate your understanding. What can I do to help your investigation?"
+  speaker: "guard_martinez"
+  emotional_state: "Relieved"
+  options:
+    - id: "ask_about_warehouse"
+      text: "Tell me about any unusual activities you've noticed at the warehouse."
+      next_node: "martinez_cooperative"
+
+martinez_nervous_info:
+  id: "martinez_nervous_info"
+  text: "Y-yes, of course, Detective. I want to be helpful. What do you need to know?"
+  speaker: "guard_martinez"
+  emotional_state: "Nervous"
+  options:
+    - id: "ask_about_warehouse"
+      text: "Tell me about any unusual activities you've noticed at the warehouse."
+      next_node: "martinez_cooperative"
+
+martinez_backup_arrives:
+  id: "martinez_backup_arrives"
+  text: "Detective! What the hell is going on here? Martinez, why is one of our detectives in cuffs?"
+  speaker: "sergeant_brooks"
+  emotional_state: "Angry"
+  inner_voice_comments:
+    - voice_type: "Authority"
+      text: "This is a perfect opportunity to assert your authority and put Martinez in his place."
+      skill_requirement: 6
+  options:
+    - id: "explain_calmly"
+      text: "There was a misunderstanding. Officer Martinez was just doing his job."
+      emotional_impact:
+        Friendly: 2
+      next_node: "martinez_grateful_backup"
+    - id: "blame_martinez"
+      text: "Ask your officer why he didn't verify my credentials before drawing his weapon."
+      emotional_impact:
+        Embarrassed: 3
+      next_node: "martinez_reprimanded"
+
+martinez_grateful_backup:
+  id: "martinez_grateful_backup"
+  text: "You're free to go, Detective. Martinez, be more careful next time. Sorry about this mix-up."
+  speaker: "sergeant_brooks"
+  emotional_state: "Apologetic"
+  inner_voice_comments: []
+  options:
+    - id: "continue_investigation"
+      text: "Thank you, Sergeant. Officer Martinez, let's start our conversation over."
+      next_node: "martinez_cooperative"
+      consequences:
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: 5
+
+martinez_reprimanded:
+  id: "martinez_reprimanded"
+  text: "Martinez! Is this true? We've talked about this! Detectives wear plainclothes - you have to check IDs! Consider yourself on report. Detective, you're free to go. I apologize for my officer's behavior."
+  speaker: "sergeant_brooks"
+  emotional_state: "Angry"
+  inner_voice_comments:
+    - voice_type: "Empathy"
+      text: "Martinez looks devastated. This might actually cost him his job."
+      skill_requirement: 5
+  options:
+    - id: "ease_reprimand"
+      text: "Actually, Sergeant, it was partly my fault. I should have identified myself clearly."
+      emotional_impact:
+        Grateful: 3
+      next_node: "martinez_deeply_grateful"
+      consequences:
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: 15
+    - id: "continue_investigation"
+      text: "Thank you, Sergeant. Officer Martinez, I still need information about the warehouse."
+      next_node: "martinez_cooperative"
+      consequences:
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: -10
+
+martinez_deeply_grateful:
+  id: "martinez_deeply_grateful"
+  text: "Thank you so much, Detective. I thought my career was over. I'll do anything to help your investigation."
+  speaker: "guard_martinez"
+  emotional_state: "Grateful"
+  inner_voice_comments:
+    - voice_type: "Logic"
+      text: "You've earned his loyalty. He'll be a valuable ally in this investigation."
+      skill_requirement: 3
+  options:
+    - id: "ask_for_help"
+      text: "I need information about suspicious activities at the warehouse."
+      next_node: "martinez_special_intel"
+      
+martinez_special_intel:
+  id: "martinez_special_intel"
+  text: "Detective, I've been keeping secret records of everything suspicious. I was afraid to show them to anyone in case they were involved. But I trust you now. Here's everything - schedules, license plates, photos..."
+  speaker: "guard_martinez"
+  emotional_state: "Relieved"
+  options:
+    - id: "thank_martinez"
+      text: "This is incredible, Martinez. You might have just broken this case wide open."
+      next_node: ""
+      consequences:
+        - effect_type: "clue"
+          data:
+            action: "add"
+            clue_id: "martinez_secret_evidence"
+            description: "Comprehensive evidence package about warehouse irregularities, including photos and license plates"
+        - effect_type: "quest"
+          data:
+            action: "complete_objective"
+            quest_id: "main_investigation"
+            objective_id: "gather_initial_evidence"
+        - effect_type: "relationship"
+          data:
+            npc_id: "guard_martinez"
+            value: 10

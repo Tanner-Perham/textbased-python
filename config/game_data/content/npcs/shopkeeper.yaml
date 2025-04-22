@@ -1,0 +1,7 @@
+shopkeeper:
+  id: "shopkeeper"
+  name: "Mr. Harrison"
+  dialogue_entry_point: "shopkeeper_default"
+  disposition: 50
+  location: "market"
+  gender: "male"

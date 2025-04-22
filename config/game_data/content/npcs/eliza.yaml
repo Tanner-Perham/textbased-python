@@ -1,0 +1,7 @@
+eliza:
+  id: "eliza"
+  name: "Eliza"
+  dialogue_entry_point: "eliza_default"
+  disposition: 60
+  location: "town_square"
+  gender: "female"

@@ -1,0 +1,62 @@
+warehouse_office:
+  id: "warehouse_office"
+  name: "Security Office"
+  description: "A small, cluttered office with monitors showing security feeds. Coffee cups and old newspapers litter the desk. The night shift log book lies open."
+  available_actions:
+    - name: "check_logbook"
+      description: "Review the security log book"
+      requirements:
+        logic: 7
+      consequences:
+        - event_type: "AddClue"
+          data:
+            id: "night_shift_anomaly"
+            description: "The night guard's last entry stops mid-sentence"
+            related_quest: "main_investigation"
+            discovered: false
+  connected_locations:
+    - "warehouse_entrance"
+  location_items:
+    - id: "security_keycard"
+      name: "Security Keycard"
+      description: "A keycard with level 2 security clearance. Might grant access to restricted areas."
+      categories: ["QUEST_ITEM", "TOOL"]
+      weight: 0.1
+      is_obvious: true
+    - id: "coffee_mug"
+      name: "Coffee Mug"
+      description: "A ceramic mug with '#1 Security Guard' printed on it. Still has some cold coffee inside."
+      categories: ["TOOL"]
+      weight: 0.3
+      is_obvious: true
+  location_containers:
+    - id: "desk_drawer"
+      name: "Desk Drawer"
+      description: "A drawer in the security desk. It's locked, but the lock seems flimsy."
+      categories: ["CONTAINER"]
+      weight: 5.0
+      capacity: 10.0
+      is_obvious: true
+      locked: true
+      lockpick_difficulty: 8
+      contents:
+        - id: "security_logs"
+          name: "Security Logs"
+          description: "A folder containing printed security logs from the past month."
+          categories: ["EVIDENCE", "QUEST_ITEM"]
+          weight: 0.5
+          is_obvious: true
+    - id: "filing_cabinet"
+      name: "Filing Cabinet"
+      description: "A metal filing cabinet containing various documents."
+      categories: ["CONTAINER"]
+      weight: 15.0
+      capacity: 20.0
+      is_obvious: true
+      contents:
+        - id: "warehouse_blueprint"
+          name: "Warehouse Blueprint"
+          description: "A detailed blueprint of the warehouse layout, showing all rooms and emergency exits."
+          categories: ["EVIDENCE", "QUEST_ITEM"]
+          weight: 0.3
+          is_obvious: true

@@ -1,0 +1,52 @@
+items:
+  professional_attire:
+    id: "professional_attire"
+    name: "Tailored Detective Suit"
+    description: "A perfectly tailored suit that commands respect and attention."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.8
+    style_rating: 9
+    effects:
+      - attribute: "authority"
+        value: 2
+        description: "Projects an air of professionalism and competence."
+      - attribute: "suggestion"
+        value: 1
+        description: "People tend to trust well-dressed professionals."
+      - attribute: "agility"
+        value: -1
+        description: "The formal attire restricts your movement slightly."
+    set_id: "professional_set"
+
+  confidence_charm:
+    id: "confidence_charm"
+    name: "Lucky Detective's Charm"
+    description: "A small medallion that you've carried through countless interrogations. It gives you confidence."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.1
+    effects:
+      - attribute: "suggestion"
+        value: 2
+        description: "The confidence it provides makes your suggestions more compelling."
+      - attribute: "empathy"
+        value: 1
+        description: "The comfort it provides helps you focus on others' emotions."
+    hidden_lore: "This charm belonged to the legendary negotiator Captain Reynolds who talked down 27 hostage situations without a single casualty."
+
+  voice_recorder:
+    id: "voice_recorder"
+    name: "Digital Voice Recorder"
+    description: "A high-quality digital recorder for capturing interviews and ambient sounds."
+    categories: ["TOOL"]
+    weight: 0.3
+    effects:
+      - attribute: "memory"
+        value: 1
+        description: "Allows you to review conversations for missed details."
+      - attribute: "empathy"
+        value: 1
+        description: "Listening to recorded voices helps you catch emotional undertones."
+    hidden_usage: "The recorder has a special frequency setting that can pick up whispers from up to 20 feet away."
+    perception_difficulty: 10

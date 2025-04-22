@@ -1,0 +1,230 @@
+items:
+  detective_badge:
+    name: "Detective Badge"
+    description: "An official detective badge that grants you access to restricted areas."
+    categories:
+      - WEARABLE
+    slot: "ACCESSORY"
+    weight: 0.1
+    effects:
+      - attribute: "authority"
+        value: 15
+        description: "Increases your authority and ability to question suspects."
+    stackable: false
+    
+  trench_coat:
+    name: "Worn Trench Coat"
+    description: "A classic detective's trench coat, perfect for those rainy crime scenes."
+    categories:
+      - WEARABLE
+    slot: "TORSO"
+    weight: 2.0
+    style_rating: 8
+    condition: 85
+    effects:
+      - attribute: "perception"
+        value: 5
+        description: "The many pockets help you keep track of evidence."
+    stackable: false
+    set_id: "detective_outfit"
+
+  detective_coat:
+    id: "detective_coat"
+    name: "Weathered Trench Coat"
+    description: "A durable coat with plenty of pockets. Perfect for keeping your notes and small evidence dry."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 2.0
+    style_rating: 8
+    effects:
+      - attribute: "composure"
+        value: 2
+        description: "The coat's weight provides a grounding presence."
+      - attribute: "authority"
+        value: 1
+        description: "A classic symbol of detective work."
+      - attribute: "endurance"
+        value: -1
+        description: "The heavy coat can be tiring to wear."
+    set_id: "detective_suit"
+    hidden_lore: "This coat was a gift from your mentor, Chief Detective Henderson, when you made detective. He wore it for 15 years and solved the infamous Harborside Strangler case while wearing it."
+    hidden_clues: 
+      - "Several of the inner pockets have been modified to be hidden or waterproof."
+      - "There's a small bloodstain on the inside lining that's not yours."
+    hidden_usage: "The coat's many hidden pockets could be used to conceal small evidence or tools that you don't want others to know you're carrying."
+    perception_difficulty: 12
+    wisdom_difficulty: 10
+
+  # Wearables - Detective Set
+  detective_hat:
+    id: "detective_hat"
+    name: "Well-Worn Detective's Hat"
+    description: "A classic fedora that's seen its share of cases. The brim is perfect for shielding your eyes during long stakeouts."
+    categories: ["WEARABLE"]
+    slot: "HEAD"
+    weight: 0.5
+    style_rating: 7
+    effects:
+      - attribute: "perception"
+        value: 1
+        description: "The hat's brim helps focus your attention on details."
+      - attribute: "authority"
+        value: 1
+        description: "A symbol of your profession."
+    set_id: "detective_suit"
+
+
+  detective_slacks:
+    id: "detective_slacks"
+    name: "Professional Slacks"
+    description: "Well-pressed pants with subtle pinstripes. They've been through countless stakeouts but still maintain their dignity."
+    categories: ["WEARABLE"]
+    slot: "LEGS"
+    weight: 1.0
+    style_rating: 6
+    effects:
+      - attribute: "composure"
+        value: 1
+        description: "Looking professional helps maintain composure."
+    set_id: "detective_suit"
+
+  detective_shoes:
+    id: "detective_shoes"
+    name: "Reliable Oxford Shoes"
+    description: "Sturdy leather shoes with rubber soles. Good for both chasing suspects and maintaining professional appearance."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 1.2
+    style_rating: 6
+    effects:
+      - attribute: "agility"
+        value: 1
+        description: "Well-broken in and comfortable for running."
+      - attribute: "stealth"
+        value: -1
+        description: "The leather soles can be noisy on hard surfaces."
+    set_id: "detective_suit"
+
+  # Casual Wear Set
+  worn_jacket:
+    id: "worn_jacket"
+    name: "Worn Leather Jacket"
+    description: "A comfortable jacket that's seen better days. It helps you blend in with the crowd."
+    categories: ["WEARABLE"]
+    slot: "TORSO"
+    weight: 1.5
+    style_rating: 5
+    effects:
+      - attribute: "empathy"
+        value: 1
+        description: "The casual appearance puts people at ease."
+      - attribute: "authority"
+        value: -1
+        description: "Less intimidating than professional attire."
+    set_id: "casual_wear"
+    hidden_lore: "This was your go-to jacket during your undercover years. It helped you infiltrate the Eastside Crew and bring down their gun-running operation."
+    hidden_clues:
+      - "There's a sewn-up knife slash on the left side that you got in a bar fight with a suspect."
+      - "The inside pocket has the initials 'C.D.' written in small letters - the alias you used undercover."
+    perception_difficulty: 11
+
+  casual_pants:
+    id: "casual_pants"
+    name: "Comfortable Jeans"
+    description: "Well-worn jeans that allow for easy movement."
+    categories: ["WEARABLE"]
+    slot: "LEGS"
+    weight: 0.8
+    style_rating: 4
+    effects:
+      - attribute: "agility"
+        value: 1
+        description: "Flexible material allows for better movement."
+    set_id: "casual_wear"
+
+  sneakers:
+    id: "sneakers"
+    name: "Quiet Sneakers"
+    description: "Rubber-soled shoes perfect for moving silently."
+    categories: ["WEARABLE"]
+    slot: "FEET"
+    weight: 0.7
+    style_rating: 3
+    effects:
+      - attribute: "stealth"
+        value: 2
+        description: "Soft soles make little noise."
+      - attribute: "authority"
+        value: -1
+        description: "Too casual for formal situations."
+    set_id: "casual_wear"
+
+  # Accessories
+  lucky_watch:
+    id: "lucky_watch"
+    name: "Lucky Watch"
+    description: "An old watch that's never let you down. Something about it helps you think clearly."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.2
+    style_rating: 5
+    effects:
+      - attribute: "logic"
+        value: 1
+        description: "The rhythmic ticking helps organize your thoughts."
+      - attribute: "composure"
+        value: 1
+        description: "A familiar comfort in stressful situations."
+    hidden_lore: "This watch belonged to your father, who was also a detective. He always said it saved his life during the West Side gang wars, but never explained how."
+    hidden_clues:
+      - "The back panel seems to have a very thin seam that doesn't match the rest of the design."
+    hidden_usage: "If you press and hold the winding crown for 5 seconds, the back panel opens to reveal a hidden compartment just large enough for a small key or microfilm."
+    perception_difficulty: 15
+    wisdom_difficulty: 8
+
+  reading_glasses:
+    id: "reading_glasses"
+    name: "Reading Glasses"
+    description: "Simple reading glasses that help with detailed work."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.1
+    style_rating: 4
+    effects:
+      - attribute: "perception"
+        value: 2
+        description: "Helps spot small details."
+      - attribute: "reaction"
+        value: -1
+        description: "Slightly reduces peripheral vision."
+
+
+
+item_sets:
+  detective_outfit:
+    name: "Complete Detective Outfit"
+    description: "The full ensemble of a classic detective."
+    required_pieces:
+      - "trench_coat"
+      - "detective_hat"
+      - "detective_badge"
+    set_bonus:
+      - attribute: "investigation"
+        value: 15.0
+        description: "Increases your ability to find clues and solve mysteries."
+      - attribute: "intimidation"
+        value: 10.0
+        description: "Makes suspects more likely to reveal information when questioned." 
+
+  casual_wear:
+    id: "casual_wear"
+    name: "Inconspicuous Attire"
+    description: "Blend in with the crowd."
+    required_pieces: ["worn_jacket", "casual_pants", "sneakers"]
+    set_bonus:
+      - attribute: "empathy"
+        value: 1
+        description: "People feel more at ease around someone dressed casually."
+      - attribute: "stealth"
+        value: 2
+        description: "It's easier to go unnoticed in everyday clothing." 

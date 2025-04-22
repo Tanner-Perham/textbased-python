@@ -1,0 +1,7 @@
+merchant:
+  id: "merchant"
+  name: "Maya"
+  dialogue_entry_point: "merchant_default"
+  disposition: 45
+  location: "market"
+  gender: "female" 
