@@ -1,0 +1,29 @@
+---
+# Item Sets Configuration
+
+item_sets:
+  detective_suit:
+    id: "detective_suit"
+    name: "Classic Detective's Attire"
+    description: "A timeless ensemble that commands respect and attention."
+    required_pieces: ["detective_hat", "detective_coat", "detective_slacks", "detective_shoes"]
+    set_bonus:
+      - attribute: "authority"
+        value: 2
+        description: "The complete detective's outfit grants an air of unmistakable authority."
+      - attribute: "intimidation"
+        value: 1
+        description: "People tend to be more forthcoming when faced with the full detective regalia."
+
+  casual_wear:
+    id: "casual_wear"
+    name: "Inconspicuous Attire"
+    description: "Blend in with the crowd."
+    required_pieces: ["worn_jacket", "casual_pants", "sneakers"]
+    set_bonus:
+      - attribute: "empathy"
+        value: 1
+        description: "People feel more at ease around someone dressed casually."
+      - attribute: "stealth"
+        value: 2
+        description: "It's easier to go unnoticed in everyday clothing." 

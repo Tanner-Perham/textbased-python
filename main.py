@@ -21,7 +21,19 @@ from textual.app import App
 def load_config(config_path: str) -> Optional[GameConfig]:
     """Load game configuration."""
     try:
-        return GameConfig.load(config_path)
+        # Handle both single file and directory cases
+        if os.path.isdir(config_path):
+            print(f"Loading configuration from directory: {config_path}")
+            return GameConfig.load(config_path)
+        else:
+            # If path is a file that doesn't exist, check if it's in the config directory
+            if not os.path.exists(config_path) and not config_path.startswith("config/"):
+                alternative_path = os.path.join("config", config_path)
+                if os.path.exists(alternative_path):
+                    config_path = alternative_path
+
+            print(f"Loading configuration from: {config_path}")
+            return GameConfig.load(config_path)
     except Exception as e:
         print(f"Error loading configuration: {e}")
         return None
@@ -29,10 +41,17 @@ def load_config(config_path: str) -> Optional[GameConfig]:
 
 def main():
     """Main function."""
-    # Set up
-    config_path = "game_config.yaml"
+    # Set up configuration path
+    # Check if new split config exists first, otherwise use the single file
+    split_config_dir = "config/game_data"
+    single_config_file = "game_config.yaml"
+    
+    if os.path.exists(split_config_dir):
+        config_path = split_config_dir
+    else:
+        config_path = single_config_file
 
-    print("Loading game configuration...")
+    print(f"Loading game configuration from {config_path}...")
     config = load_config(config_path)
     if not config:
         print("Failed to load game configuration. Exiting.")

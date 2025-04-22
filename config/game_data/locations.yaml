@@ -1,0 +1,343 @@
+---
+# Locations Configuration
+
+locations:
+  warehouse_entrance:
+    id: "warehouse_entrance"
+    name: "Warehouse Entrance"
+    description: "A imposing metal door stands before you, its surface marked by years of use. The surrounding concrete walls are covered in faded graffiti. The air smells of rust and distant sea salt."
+    available_actions:
+      - name: "inspect_door"
+        description: "Examine the warehouse door closely"
+        requirements:
+          perception: 8
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "scratch_marks"
+              description: "Recent scratch marks around the lock suggest forced entry"
+              related_quest: "main_investigation"
+              discovered: false
+    connected_locations:
+      - "warehouse_office"
+      - "parking_lot"
+      - "town_square" # Added connection to town for quest accessibility
+    location_items:
+      - id: "rusty_key"
+        name: "Rusty Key"
+        description: "An old, rusty key. It's unclear what it might open."
+        categories: ["QUEST_ITEM"]
+        weight: 0.1
+        is_obvious: true
+      - id: "discarded_glove"
+        name: "Discarded Work Glove"
+        description: "A heavy-duty work glove, stained with what looks like oil or grease."
+        categories: ["WEARABLE"]
+        slot: "ACCESSORY"
+        weight: 0.2
+        style_rating: 1
+        is_obvious: true
+      - id: "hidden_lockpick"
+        name: "Professional Lockpick"
+        description: "A high-quality lockpick that someone tried to hide."
+        categories: ["TOOL"]
+        weight: 0.1
+        is_obvious: false
+        perception_difficulty: 12
+        hidden_clues:
+          - "The lockpick appears to be recently used."
+          - "There are scratches on it matching the marks on the warehouse door."
+    location_containers:
+      - id: "trash_bin"
+        name: "Metal Trash Bin"
+        description: "A large metal trash bin. It smells terrible, but might contain useful items."
+        categories: ["CONTAINER"]
+        weight: 8.0
+        capacity: 30.0
+        is_obvious: true
+        contents:
+          - id: "crumpled_note"
+            name: "Crumpled Note"
+            description: "A note that's been crumpled up and thrown away. It contains partial delivery instructions."
+            categories: ["EVIDENCE", "QUEST_ITEM"]
+            weight: 0.1
+            is_obvious: true
+            hidden_clues:
+              - "The handwriting matches entries in the security logbook."
+
+  warehouse_office:
+    id: "warehouse_office"
+    name: "Security Office"
+    description: "A small, cluttered office with monitors showing security feeds. Coffee cups and old newspapers litter the desk. The night shift log book lies open."
+    available_actions:
+      - name: "check_logbook"
+        description: "Review the security log book"
+        requirements:
+          logic: 7
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "night_shift_anomaly"
+              description: "The night guard's last entry stops mid-sentence"
+              related_quest: "main_investigation"
+              discovered: false
+    connected_locations:
+      - "warehouse_entrance"
+    location_items:
+      - id: "security_keycard"
+        name: "Security Keycard"
+        description: "A keycard with level 2 security clearance. Might grant access to restricted areas."
+        categories: ["QUEST_ITEM", "TOOL"]
+        weight: 0.1
+        is_obvious: true
+      - id: "coffee_mug"
+        name: "Coffee Mug"
+        description: "A ceramic mug with '#1 Security Guard' printed on it. Still has some cold coffee inside."
+        categories: ["TOOL"]
+        weight: 0.3
+        is_obvious: true
+    location_containers:
+      - id: "desk_drawer"
+        name: "Desk Drawer"
+        description: "A drawer in the security desk. It's locked, but the lock seems flimsy."
+        categories: ["CONTAINER"]
+        weight: 5.0
+        capacity: 10.0
+        is_obvious: true
+        locked: true
+        lockpick_difficulty: 8
+        contents:
+          - id: "security_logs"
+            name: "Security Logs"
+            description: "A folder containing printed security logs from the past month."
+            categories: ["EVIDENCE", "QUEST_ITEM"]
+            weight: 0.5
+            is_obvious: true
+      - id: "filing_cabinet"
+        name: "Filing Cabinet"
+        description: "A metal filing cabinet containing various documents."
+        categories: ["CONTAINER"]
+        weight: 15.0
+        capacity: 20.0
+        is_obvious: true
+        contents:
+          - id: "warehouse_blueprint"
+            name: "Warehouse Blueprint"
+            description: "A detailed blueprint of the warehouse layout, showing all rooms and emergency exits."
+            categories: ["EVIDENCE", "QUEST_ITEM"]
+            weight: 0.3
+            is_obvious: true
+  
+  # Added locations for the missing locket quest
+  town_square:
+    id: "town_square"
+    name: "Town Square"
+    description: "The heart of the town with a beautiful central fountain. People gather here to socialize and relax. The square is lined with benches and decorative plantings. Recently, a festival was held here."
+    available_actions:
+      - name: "search_fountain"
+        description: "Search around the fountain area"
+        requirements:
+          perception: 7
+        consequences:
+          - event_type: "AddClue"
+            data:
+              id: "locket_clue"
+              description: "You found a thread that might have come from the locket's chain."
+              related_quest: "missing_locket"
+              discovered: true
+    connected_locations:
+      - "warehouse_entrance"
+      - "market"
+      - "garden"
+    location_items:
+      - id: "lost_wallet"
+        name: "Lost Wallet"
+        description: "A worn leather wallet, probably lost by a visitor to the square."
+        categories: ["EVIDENCE"]
+        weight: 0.2
+        is_obvious: true
+        contents:
+          - id: "wallet_cash"
+            name: "Cash"
+            description: "A small amount of cash, about $20."
+            categories: ["QUEST_ITEM"]
+            weight: 0.1
+            value: 20
+          - id: "business_card"
+            name: "Business Card"
+            description: "A business card for 'Harbor Shipping Co.' with a handwritten note on the back."
+            categories: ["EVIDENCE"]
+            weight: 0.05
+      - id: "silver_coin"
+        name: "Silver Commemorative Coin"
+        description: "A special coin minted for the town's centennial celebration. Someone must have dropped it."
+        categories: ["QUEST_ITEM"]
+        weight: 0.1
+        value: 5
+        is_obvious: true
+      - id: "locket_chain"
+        name: "Broken Silver Chain"
+        description: "A delicate silver chain that appears to have snapped. It might have held a pendant or locket."
+        categories: ["EVIDENCE", "QUEST_ITEM"]
+        weight: 0.05
+        is_obvious: false
+        perception_difficulty: 10
+        hidden_clues:
+          - "The clasp is intact, suggesting the chain broke elsewhere."
+          - "There are traces of something that might be nail polish on one end."
+  
+  market:
+    id: "market"
+    name: "Market"
+    description: "A bustling marketplace with various stalls selling fresh produce, crafts, and trinkets. The air is filled with the mingling aromas of spices, flowers, and street food."
+    available_actions:
+      - name: "browse_stalls"
+        description: "Look through the market stalls"
+        requirements: {}
+        consequences: []
+    connected_locations:
+      - "town_square"
+      - "garden"
+    location_items:
+      - id: "ripe_apple"
+        name: "Ripe Apple"
+        description: "A juicy, red apple that looks perfectly ripe."
+        categories: ["CONSUMABLE"]
+        weight: 0.2
+        stackable: true
+        quantity: 1
+        effects:
+          - attribute: "health"
+            value: 5
+            description: "A healthy snack restores some energy."
+        is_obvious: true
+        use_text: "The apple is crisp and delicious, giving you a small energy boost."
+      - id: "colorful_scarf"
+        name: "Colorful Scarf"
+        description: "A handwoven scarf with vibrant patterns. Seems to have been dropped by a shopper."
+        categories: ["WEARABLE"]
+        slot: "ACCESSORY"
+        weight: 0.3
+        style_rating: 7
+        is_obvious: true
+    location_containers:
+      - id: "abandoned_basket"
+        name: "Abandoned Shopping Basket"
+        description: "A wicker shopping basket left unattended. It contains a few items."
+        categories: ["CONTAINER"]
+        weight: 1.0
+        capacity: 5.0
+        is_obvious: true
+        contents:
+          - id: "fresh_bread"
+            name: "Fresh Bread"
+            description: "A loaf of freshly baked bread, still warm to the touch."
+            categories: ["CONSUMABLE"]
+            weight: 0.5
+            stackable: true
+            quantity: 1
+            effects:
+              - attribute: "health"
+                value: 10
+                description: "Delicious bread restores health."
+            use_text: "The bread is delicious and filling."
+  
+  garden:
+    id: "garden"
+    name: "Garden"
+    description: "A serene public garden with winding paths, vibrant flower beds, and shady trees. A popular spot for relaxation and contemplation. Children sometimes play hide and seek among the shrubs."
+    available_actions:
+      - name: "search_garden"
+        description: "Search the garden thoroughly"
+        requirements:
+          perception: 6
+        consequences:
+          - event_type: "AddItem"
+            data:
+              id: "silver_locket"
+              name: "Silver Locket"
+              description: "A beautiful silver locket with intricate engravings. It contains a small portrait inside."
+              effects: {}
+    connected_locations:
+      - "town_square"
+      - "market"
+    location_items:
+      - id: "gardening_gloves"
+        name: "Gardening Gloves"
+        description: "A pair of sturdy gardening gloves, slightly dirty from use."
+        categories: ["WEARABLE"]
+        slot: "ACCESSORY"
+        weight: 0.2
+        style_rating: 3
+        effects:
+          - attribute: "endurance"
+            value: 1
+            description: "Protects your hands during physical work."
+        is_obvious: true
+      - id: "silver_locket"
+        name: "Silver Locket"
+        description: "A beautiful silver locket with intricate vine patterns. It seems to be the one Eliza described."
+        categories: ["QUEST_ITEM"]
+        weight: 0.1
+        is_obvious: false
+        perception_difficulty: 12
+        hidden_clues:
+          - "The locket is partially buried under a rose bush."
+          - "There's a small portrait inside that matches Eliza's description of her grandmother."
+    location_containers:
+      - id: "gardening_shed"
+        name: "Gardening Shed"
+        description: "A small wooden shed where gardening tools are stored."
+        categories: ["CONTAINER"]
+        weight: 100.0
+        capacity: 200.0
+        is_obvious: true
+        contents:
+          - id: "pruning_shears"
+            name: "Pruning Shears"
+            description: "A pair of sharp pruning shears for trimming plants."
+            categories: ["TOOL"]
+            weight: 0.5
+            is_obvious: true
+          - id: "watering_can"
+            name: "Watering Can"
+            description: "A metal watering can, half-filled with water."
+            categories: ["TOOL"]
+            weight: 2.0
+            is_obvious: true
+  
+  # Required for the quest but not explicitly described
+  parking_lot:
+    id: "parking_lot"
+    name: "Parking Lot"
+    description: "A modest parking area serving the warehouse district. Oil stains mark the cracked asphalt, and a few vehicles are parked haphazardly."
+    available_actions: []
+    connected_locations:
+      - "warehouse_entrance"
+    location_items:
+      - id: "car_key"
+        name: "Car Key"
+        description: "A key to a vehicle. It has a rental company tag attached."
+        categories: ["QUEST_ITEM", "TOOL"]
+        weight: 0.1
+        is_obvious: true
+      - id: "tire_iron"
+        name: "Tire Iron"
+        description: "A standard tire iron, useful for changing tires or as an impromptu weapon."
+        categories: ["TOOL"]
+        weight: 2.0
+        is_obvious: true
+        effects:
+          - attribute: "strength"
+            value: 2
+            description: "Could be used as a makeshift weapon."
+      - id: "oil_stained_rag"
+        name: "Oil-Stained Rag"
+        description: "A rag heavily stained with motor oil. It might have been used recently."
+        categories: ["EVIDENCE"]
+        weight: 0.2
+        is_obvious: false
+        perception_difficulty: 8
+        hidden_clues:
+          - "The oil stains are fresh, suggesting recent mechanical work."
+          - "There's a partial fingerprint visible in one of the oil stains." 

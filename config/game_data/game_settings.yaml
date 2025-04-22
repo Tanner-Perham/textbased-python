@@ -1,0 +1,18 @@
+---
+# Game Settings Configuration
+
+game_settings:
+  title: "The Warehouse Mystery"
+  starting_location: "warehouse_entrance"
+  default_time: "Morning"
+  starting_inventory:
+    - "police_badge"
+    - "notebook"
+    - "pen"
+    - "flashlight"
+    - "evidence_bag"
+    - "coffee"
+    - "casual_pants"
+    - "sneakers"
+    - "worn_jacket"
+    - "detective_coat" 

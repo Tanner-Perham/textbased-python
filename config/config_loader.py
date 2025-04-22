@@ -3,6 +3,7 @@ This module is responsible for loading and parsing game configuration from YAML 
 """
 
 import os
+import glob
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -174,15 +175,96 @@ class GameConfig:
 
     @classmethod
     def load(cls, path: str) -> "GameConfig":
-        """Load game configuration from YAML file."""
-        if not os.path.exists(path):
+        """Load game configuration from YAML files.
+        
+        Args:
+            path: Either a path to a single YAML file or a directory containing multiple YAML files
+        
+        Returns:
+            A GameConfig instance with configuration loaded from the specified file(s).
+        """
+        config_loader = ConfigLoader()
+        
+        # Check if path is a directory
+        if os.path.isdir(path):
+            # Look for a main configuration file
+            main_config_path = os.path.join(path, "main.yaml")
+            if os.path.exists(main_config_path):
+                return config_loader.load_split_config(main_config_path)
+            else:
+                # If no main file, load all YAML files in the directory
+                return config_loader.load_config_directory(path)
+        elif not os.path.exists(path):
             raise FileNotFoundError(f"Configuration file not found: {path}")
+        else:
+            # Path is a single file, load it directly
+            return config_loader.load_single_config(path)
 
-        with open(path, "r", encoding="utf-8") as file:
-            config_data = yaml.safe_load(file)
 
+class ConfigLoader:
+    """Loads and validates game configuration."""
+
+    @staticmethod
+    def load_config(config_path: str) -> Dict:
+        """Load the game configuration from a YAML file."""
+        with open(config_path, 'r', encoding='utf-8') as file:
+            return yaml.safe_load(file)
+
+    def load_single_config(self, config_path: str) -> GameConfig:
+        """Load game configuration from a single YAML file."""
+        print(f"Loading configuration from {config_path}")
+        config_data = self.load_config(config_path)
+        return self._process_config_data(config_data, os.path.dirname(config_path))
+
+    def load_split_config(self, main_config_path: str) -> GameConfig:
+        """Load a split configuration using a main config file that includes other files."""
+        print(f"Loading split configuration from {main_config_path}")
+        main_config = self.load_config(main_config_path)
+        
+        # If there's no include directive, treat as a single config
+        if "include" not in main_config:
+            return self._process_config_data(main_config, os.path.dirname(main_config_path))
+        
+        # Merge all included configuration files
+        base_dir = os.path.dirname(main_config_path)
+        merged_config = {}
+        
+        for included_file in main_config["include"]:
+            include_path = os.path.join(base_dir, included_file)
+            print(f"Including configuration from {include_path}")
+            
+            if not os.path.exists(include_path):
+                print(f"Warning: Included config file not found: {include_path}")
+                continue
+                
+            included_config = self.load_config(include_path)
+            if included_config:
+                # Merge the included configuration into the main configuration
+                merged_config.update(included_config)
+        
+        return self._process_config_data(merged_config, base_dir)
+
+    def load_config_directory(self, config_dir: str) -> GameConfig:
+        """Load all YAML files from a directory and merge them."""
+        print(f"Loading configuration from directory {config_dir}")
+        
+        # Find all YAML files in the directory
+        yaml_files = glob.glob(os.path.join(config_dir, "*.yaml")) + glob.glob(os.path.join(config_dir, "*.yml"))
+        
+        merged_config = {}
+        for yaml_file in yaml_files:
+            print(f"Including configuration from {yaml_file}")
+            config_data = self.load_config(yaml_file)
+            if config_data:
+                merged_config.update(config_data)
+        
+        return self._process_config_data(merged_config, config_dir)
+
+    def _process_config_data(self, config_data: Dict, base_dir: str) -> GameConfig:
+        """Process the loaded configuration data into a GameConfig object."""
         # Parse game settings
-        game_settings = GameSettings(**config_data.get("game_settings", {}))
+        game_settings_data = config_data.get("game_settings", {})
+        game_settings = GameSettings(**game_settings_data)
 
         # Parse locations
         print("Parsing Locations")
@@ -232,13 +314,12 @@ class GameConfig:
 
         # Parse items using the ConfigLoader
         print("Parsing Items")
-        config_loader = ConfigLoader()
-        processed_config = config_loader.load_game_config(path)
-        items = processed_config['processed_items']
-        item_sets = processed_config['processed_item_sets']
+        processed_items = self.load_game_config(config_data)
+        items = processed_items['processed_items']
+        item_sets = processed_items['processed_item_sets']
 
         # Create and return GameConfig
-        return cls(
+        return GameConfig(
             game_settings=game_settings,
             locations=locations,
             npcs=npcs,
@@ -250,16 +331,6 @@ class GameConfig:
             inner_voices=config_data.get("inner_voices", []),
             thoughts=config_data.get("thoughts", {}),
         )
-
-
-class ConfigLoader:
-    """Loads and validates game configuration."""
-
-    @staticmethod
-    def load_config(config_path: str) -> Dict:
-        """Load the game configuration from a YAML file."""
-        with open(config_path, 'r') as file:
-            return yaml.safe_load(file)
 
     @staticmethod
     def create_effect(effect_data: Dict) -> Effect:
@@ -355,32 +426,29 @@ class ConfigLoader:
         else:
             return Item(**base_attrs)
 
-    @classmethod
-    def load_game_config(cls, config_path: str) -> Dict:
-        """Load and process the full game configuration."""
+    def load_game_config(self, config_data: Dict) -> Dict:
+        """Process the items and item sets from the config data."""
         try:
-            config = cls.load_config(config_path)
-            
             # Process item sets
             item_sets = {
-                set_id: cls.create_item_set(set_id, set_data)
-                for set_id, set_data in config.get('item_sets', {}).items()
+                set_id: self.create_item_set(set_id, set_data)
+                for set_id, set_data in config_data.get('item_sets', {}).items()
             }
 
             # Process items
             items = {}
-            for item_id, item_data in config.get('items', {}).items():
+            for item_id, item_data in config_data.get('items', {}).items():
                 try:
-                    items[item_id] = cls.create_item(item_id, item_data)
+                    items[item_id] = self.create_item(item_id, item_data)
                 except Exception as e:
                     print(f"Error processing item {item_id}: {str(e)}")
                     continue
 
-            # Update config with processed data
-            config['processed_item_sets'] = item_sets
-            config['processed_items'] = items
-
-            return config
+            # Return processed data
+            return {
+                'processed_item_sets': item_sets,
+                'processed_items': items
+            }
         except Exception as e:
             print(f"Error loading configuration: {str(e)}")
             raise

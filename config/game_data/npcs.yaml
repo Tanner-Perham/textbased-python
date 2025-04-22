@@ -1,0 +1,52 @@
+---
+# NPCs Configuration
+
+npcs:
+  guard_martinez:
+    id: "guard_martinez"
+    name: "Officer Martinez"
+    dialogue_entry_point: "martinez_intro"
+    disposition: 50
+    location: "warehouse_office"
+    gender: "male"
+
+  worker_chen:
+    id: "worker_chen"
+    name: "Sarah Chen"
+    dialogue_entry_point: "chen_intro"
+    disposition: 65
+    location: "warehouse_entrance"
+    gender: "female"
+
+  # Added NPCs for the missing locket quest
+  eliza:
+    id: "eliza"
+    name: "Eliza"
+    dialogue_entry_point: "eliza_default"
+    disposition: 60
+    location: "town_square"
+    gender: "female"
+
+  shopkeeper:
+    id: "shopkeeper"
+    name: "Mr. Harrison"
+    dialogue_entry_point: "shopkeeper_default"
+    disposition: 50
+    location: "market"
+    gender: "male"
+
+  gardener:
+    id: "gardener"
+    name: "Old Tom"
+    dialogue_entry_point: "gardener_default"
+    disposition: 55
+    location: "garden"
+    gender: "male"
+
+  merchant:
+    id: "merchant"
+    name: "Maya"
+    dialogue_entry_point: "merchant_default"
+    disposition: 45
+    location: "market"
+    gender: "female" 
