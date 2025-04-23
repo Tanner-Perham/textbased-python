@@ -32,3 +32,15 @@ items:
         value: 2
         description: "Illuminates dark areas and helps spot details."
   
+  hidden_lockpick:
+    id: "hidden_lockpick"
+    name: "Professional Lockpick"
+    description: "A high-quality lockpick that someone tried to hide."
+    categories: ["TOOL"]
+    weight: 0.1
+    hidden_clues:
+      - "The lockpick appears to be recently used"
+      - "There are scratches on it matching the marks on the warehouse door"
+      - "The handle has a distinctive pattern that might help identify its owner"
+    perception_difficulty: 12
+  

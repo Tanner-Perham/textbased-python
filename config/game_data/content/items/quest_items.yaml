@@ -25,3 +25,26 @@ items:
       - "The lighting and shadows suggest the photo was taken at dusk"
       - "There's a date stamp on the back from 3 years ago"
     perception_difficulty: 12
+
+  rusty_key:
+    id: "rusty_key"
+    name: "Rusty Key"
+    description: "An old, rusty key. It's unclear what it might open."
+    categories: ["QUEST_ITEM"]
+    weight: 0.1
+    hidden_clues:
+      - "The rust pattern suggests it's been exposed to moisture recently"
+      - "There are small scratches around the teeth, as if it's been used recently"
+    perception_difficulty: 8
+
+  crumpled_note:
+    id: "crumpled_note"
+    name: "Crumpled Note"
+    description: "A note that's been crumpled up and thrown away. It contains partial delivery instructions."
+    categories: ["EVIDENCE", "QUEST_ITEM"]
+    weight: 0.1
+    hidden_clues:
+      - "The handwriting matches entries in the security logbook"
+      - "There's a partial address that seems to be in the industrial district"
+      - "The paper has a faint chemical smell"
+    perception_difficulty: 10

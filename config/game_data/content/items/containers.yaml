@@ -7,3 +7,16 @@ items:
     weight: 2.0
     capacity: 8.0
     allowed_categories: ["TOOL"]
+
+  trash_bin:
+    id: "trash_bin"
+    name: "Metal Trash Bin"
+    description: "A large metal trash bin. It smells terrible, but might contain useful items."
+    categories: ["CONTAINER"]
+    weight: 8.0
+    capacity: 30.0
+    allowed_categories: ["QUEST_ITEM", "EVIDENCE", "TOOL"]
+    hidden_clues:
+      - "The bin has been recently emptied, but not thoroughly cleaned"
+      - "There are some fresh scratches on the inside, as if something was hastily removed"
+    perception_difficulty: 8

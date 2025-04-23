@@ -198,7 +198,18 @@ items:
         value: -1
         description: "Slightly reduces peripheral vision."
 
-
+  discarded_glove:
+    id: "discarded_glove"
+    name: "Discarded Work Glove"
+    description: "A heavy-duty work glove, stained with what looks like oil or grease."
+    categories: ["WEARABLE"]
+    slot: "ACCESSORY"
+    weight: 0.2
+    style_rating: 1
+    hidden_clues:
+      - "The oil stains appear to be from industrial machinery"
+      - "The glove is slightly torn, suggesting it was discarded after an accident"
+    perception_difficulty: 6
 
 item_sets:
   detective_outfit:

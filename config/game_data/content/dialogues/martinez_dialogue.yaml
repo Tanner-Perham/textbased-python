@@ -345,6 +345,7 @@ martinez_attacks:
         supporting_skills:
           - ["agility", 0.5]
         white_check: false
+        hidden: false
       conditions:
         any_of:
           - required_items: ["police_badge"]
