@@ -5,3 +5,7 @@ worker_chen:
   disposition: 65
   location: "warehouse_entrance"
   gender: "female"
+  schedule:
+    morning: "warehouse_entrance"
+    afternoon: "warehouse_office"
+    evening: "warehouse_entrance"

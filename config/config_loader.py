@@ -58,6 +58,7 @@ class NPC:
     disposition: int
     location: str
     gender: str
+    schedule: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -299,7 +300,7 @@ class ConfigLoader:
         }
         
         # Load game settings (core settings file)
-        game_settings_path = os.path.join(content_dir, "game_settings.yaml")
+        game_settings_path = os.path.join(content_dir, "content/game_settings.yaml")
         if os.path.exists(game_settings_path):
             print(f"Loading game settings from {game_settings_path}")
             settings_data = self.load_config(game_settings_path)

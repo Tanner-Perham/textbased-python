@@ -1,6 +1,6 @@
 title: "Mystery at Warehouse 13"
 starting_location: "warehouse_entrance"
-default_time: "19:00"
+default_time: "morning"
 starting_inventory:
   - id: "notebook"
     quantity: 1

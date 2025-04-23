@@ -215,16 +215,3 @@ item_sets:
       - attribute: "intimidation"
         value: 10.0
         description: "Makes suspects more likely to reveal information when questioned." 
-
-  casual_wear:
-    id: "casual_wear"
-    name: "Inconspicuous Attire"
-    description: "Blend in with the crowd."
-    required_pieces: ["worn_jacket", "casual_pants", "sneakers"]
-    set_bonus:
-      - attribute: "empathy"
-        value: 1
-        description: "People feel more at ease around someone dressed casually."
-      - attribute: "stealth"
-        value: 2
-        description: "It's easier to go unnoticed in everyday clothing." 

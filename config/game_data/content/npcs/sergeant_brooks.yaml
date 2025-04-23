@@ -1,0 +1,7 @@
+sergeant_brooks:
+  id: "sergeant_brooks"
+  name: "Sergeant Brooks"
+  dialogue_entry_point: "martinez_backup_arrives"
+  disposition: 50
+  location: "police_station"
+  gender: "Male"
