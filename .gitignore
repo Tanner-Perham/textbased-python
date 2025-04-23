@@ -7,3 +7,4 @@ textbased_python.egg-info
 config/__pycache__
 quest/__pycache__
 save/__pycache__
+game_data.db
