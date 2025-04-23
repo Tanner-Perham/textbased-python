@@ -1,0 +1,25 @@
+items:
+  sword:
+    name: "Rusty Sword"
+    description: "An old, rusty sword that has seen better days"
+    categories: ["WEAPON", "WEARABLE"]
+    value: 10
+    weight: 2.5
+    stackable: false
+    slot: "weapon"
+    effects: []
+    style_rating: 1
+    hidden_clues: []
+    perception_difficulty: 0
+
+  potion:
+    name: "Health Potion"
+    description: "A red potion that restores health"
+    categories: ["CONSUMABLE"]
+    value: 20
+    weight: 0.5
+    stackable: true
+    effects: ["heal:10"]
+    style_rating: 0
+    hidden_clues: []
+    perception_difficulty: 0 

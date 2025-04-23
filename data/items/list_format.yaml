@@ -1,0 +1,25 @@
+items:
+  - id: "shield"
+    name: "Wooden Shield"
+    description: "A basic wooden shield"
+    categories: ["ARMOR", "WEARABLE"]
+    value: 15
+    weight: 3.0
+    stackable: false
+    slot: "shield"
+    effects: []
+    style_rating: 2
+    hidden_clues: []
+    perception_difficulty: 0
+
+  - id: "scroll"
+    name: "Scroll of Fire"
+    description: "A magical scroll that can cast a fire spell"
+    categories: ["CONSUMABLE", "MAGIC"]
+    value: 30
+    weight: 0.1
+    stackable: true
+    effects: ["cast:fireball"]
+    style_rating: 3
+    hidden_clues: []
+    perception_difficulty: 0 

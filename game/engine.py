@@ -93,7 +93,8 @@ class GameEngine:
                                 categories=template_item.categories,
                                 weight=template_item.weight,
                                 slot=template_item.slot,
-                                effects=template_item.effects
+                                effects=template_item.effects,
+                                set_id=template_item.set_id
                             )
                         else:
                             item_copy = Item(
